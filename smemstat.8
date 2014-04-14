@@ -1,0 +1,64 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH SMEMSTAT 8 "April 14, 2014"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+smemstat \- report memory usage with shared memory divided proportionally.
+.br
+
+.SH SYNOPSIS
+.B smemstat
+.RI [options] " [delay " [count]]
+.br
+
+.SH DESCRIPTION
+smemstat reports the physical memory usage taking into consideration shared
+memory.  
+
+Swap reports memory that is swapped out to disk. Unshared memory is reported
+as USS (Unique Set Size).  Unshared memory including the proportion of shared
+memory is reported as the PSS (Proportional Set Size).  The non-swapped
+physical memory is reported as the RSS (Resident Set Size).
+
+Running with root privilege will report all user space processes, where as
+running without will just report the current user's processes.
+
+If a delay and count are not specified, a snapshot of the current memory used by
+the user's processes is report.
+
+If a delay in seconds is specified, smemstat will periodically show any per-process changes in
+memory; the interval being the specified delay.  This will run indefinitely until 
+a SIGINT is caught.   Specifying count will repeat the periodic output count number of times.
+
+.SH OPTIONS
+smemstat options are as follow:
+.TP
+.B \-h
+show help
+.TP
+.B \-o file
+output data into a JSON formatted file
+.TP
+.B \-q 
+run quietly, only really makes sense with \-r option.
+.TP
+.SH SEE ALSO
+.BR vmstat (8), eventstat (8), forkstat (8)
+.SH AUTHOR
+smemstat was written by Colin King <colin.king@canonical.com>
+.PP
+This manual page was written by Colin King <colin.king@canonical.com>,
+for the Ubuntu project (but may be used by others).
