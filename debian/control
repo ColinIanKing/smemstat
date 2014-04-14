@@ -1,0 +1,17 @@
+Source: smemstat
+Section: admin
+Priority: optional
+Maintainer: Colin King <colin.king@canonical.com>
+Standards-Version: 3.9.5
+Build-Depends: debhelper (>= 7)
+Homepage: http://kernel.ubuntu.com/~cking/smemstat
+
+Package: smemstat
+Architecture: linux-any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: memory usage monitoring tool
+ Smemstat reports the physical memory usage taking
+ into consideration shared memory.  The tool can
+ either report a current snapshot of memory usage
+ or periodically dump out any changes in memory.
+

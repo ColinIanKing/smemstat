@@ -1,0 +1,5 @@
+smemstat (0.01.00) trusty; urgency=low
+
+  * Initial version 
+
+ -- Colin King <colin.king@canonical.com>  Mon, 14 Apr 2014 21:37:00 +0100
