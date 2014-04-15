@@ -21,7 +21,8 @@ smemstat \- report memory usage with shared memory divided proportionally.
 
 .SH SYNOPSIS
 .B smemstat
-.RI [options] " [delay " [count]]
+[options]
+.RI [ delay " [" count ]]
 .br
 
 .SH DESCRIPTION
@@ -33,7 +34,7 @@ as USS (Unique Set Size).  Unshared memory including the proportion of shared
 memory is reported as the PSS (Proportional Set Size).  The non-swapped
 physical memory is reported as the RSS (Resident Set Size).
 
-Running with root privilege will report all user space processes, where as
+Running with root privilege will report all user space processes, otherwise
 running without will just report the current user's processes.
 
 If a delay and count are not specified, a snapshot of the current memory used by
@@ -46,17 +47,37 @@ a SIGINT is caught.   Specifying count will repeat the periodic output count num
 .SH OPTIONS
 smemstat options are as follow:
 .TP
+.B \-d
+strip directory basename off command information
+.TP
+.B \-g
+report memory in gigabytes
+.TP
 .B \-h
 show help
+.TP
+.B \-k
+report memory in kilobytes
+.TP
+.B \-l
+show long (full) command information
+.TP
+.B \-m
+report memory in megabytes
 .TP
 .B \-o file
 output data into a JSON formatted file
 .TP
 .B \-q 
-run quietly, only really makes sense with \-r option.
+run quietly, only really makes sense with \-r option
+.TP
+.B \-s
+show short command information
 .TP
 .SH SEE ALSO
-.BR vmstat (8), eventstat (8), forkstat (8)
+.BR vmstat (8),
+.BR eventstat (8),
+.BR forkstat (8)
 .SH AUTHOR
 smemstat was written by Colin King <colin.king@canonical.com>
 .PP

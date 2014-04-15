@@ -44,6 +44,14 @@
 #define PROC_HASH_TABLE_SIZE 	(503)
 
 #define OPT_QUIET		(0x00000001)
+#define OPT_CMD_SHORT		(0x00000002)
+#define OPT_CMD_LONG		(0x00000004)
+#define OPT_CMD_ALL		(OPT_CMD_SHORT | OPT_CMD_LONG)
+#define OPT_DIRNAME_STRIP	(0x00000008)
+#define OPT_MEM_IN_KBYTES	(0x00000010)
+#define OPT_MEM_IN_MBYTES	(0x00000020)
+#define OPT_MEM_IN_GBYTES	(0x00000040)
+#define OPT_MEM_ALL		(OPT_MEM_IN_KBYTES | OPT_MEM_IN_MBYTES | OPT_MEM_IN_GBYTES)
 
 /* process specific information */
 typedef struct proc_info {
@@ -92,7 +100,7 @@ static mem_info_t *mem_info_cache = NULL;
 
 
 /*
- *  out_of_memory();
+ *  out_of_memory()
  *      report out of memory condition
  */
 static void out_of_memory(const char *msg)
@@ -100,6 +108,24 @@ static void out_of_memory(const char *msg)
 	fprintf(stderr, "Out of memory: %s.\n", msg);
 }
 
+/*
+ *  count_bits()
+ *	count bits set, from C Programming Language 2nd Ed
+ */
+static unsigned int count_bits(unsigned int n)
+{
+	unsigned int c;
+
+	for (c = 0; n; c++) 
+		n &= n - 1;
+
+	return c;
+}
+
+/*
+ *  mem_to_str()
+ *	report memory in different units
+ */
 static void mem_to_str(const double val, char *buf, const size_t buflen)
 {
 	double s;
@@ -107,6 +133,19 @@ static void mem_to_str(const double val, char *buf, const size_t buflen)
 	char unit;
 
 	memset(buf, 0, buflen);
+
+	if (opt_flags & OPT_MEM_IN_KBYTES) {
+		snprintf(buf, buflen, "%9.0f", val);
+		return;
+	}
+	if (opt_flags & OPT_MEM_IN_MBYTES) {
+		snprintf(buf, buflen, "%9.0f", val / 1024);
+		return;
+	}
+	if (opt_flags & OPT_MEM_IN_GBYTES) {
+		snprintf(buf, buflen, "%9.3f", val / (1024 * 1024));
+		return;
+	}
 
 	if (v < 10.0 * 1024.0) {
 		s = (double)val;
@@ -125,8 +164,29 @@ static void mem_to_str(const double val, char *buf, const size_t buflen)
 }
 
 /*
+ *  mem_report_size()
+ *	report units used in memory size
+ */
+static void mem_report_size(void)
+{
+	char *unit;
+
+	if (!(opt_flags & OPT_MEM_ALL))
+		return;
+
+	if (opt_flags & OPT_MEM_IN_KBYTES) 
+		unit = "kilo";
+	if (opt_flags & OPT_MEM_IN_MBYTES) 
+		unit = "mega";
+	if (opt_flags & OPT_MEM_IN_GBYTES) 
+		unit = "giga";
+
+	printf("Note: Memory reported in units of %sbytes.\n", unit);
+}
+
+/*
  *  get_pid_comm
- *
+ *	get comm name of a pid
  */
 static char *get_pid_comm(const pid_t pid)
 {
@@ -175,10 +235,28 @@ static char *get_pid_cmdline(const pid_t pid)
 		ret = sizeof(buffer) - 1;
 	buffer[ret] = '\0';
 
-	for (ptr = buffer; *ptr && (ptr < buffer + ret); ptr++) {
-		if (*ptr == ' ')
-			*ptr = '\0';
+	/*
+	 *  OPT_CMD_LONG option we get the full cmdline args
+	 */
+	if (opt_flags & OPT_CMD_LONG) {
+		for (ptr = buffer; ptr < buffer + ret - 1; ptr++) {
+			if (*ptr == '\0')
+				*ptr = ' ';
+		}
+		*ptr = '\0';
 	}
+	/*
+	 *  OPT_CMD_SHORT option we discard anything after a space
+	 */
+	if (opt_flags & OPT_CMD_SHORT) {
+		for (ptr = buffer; *ptr && (ptr < buffer + ret); ptr++) {
+			if (*ptr == ' ')
+				*ptr = '\0';
+		}
+	}
+
+	if (opt_flags & OPT_DIRNAME_STRIP)
+		return strdup(basename(buffer));
 
 	return strdup(buffer);
 }
@@ -874,8 +952,15 @@ static void show_usage(void)
 	printf("%s, version %s\n\n", APP_NAME, VERSION);
 	printf("Usage: %s [options] [duration] [count]\n", APP_NAME);
 	printf("Options are:\n");
+	printf("  -d\t\tstrip directory basename off command information\n");
+	printf("  -g\t\treport memory in gigabytes\n");
 	printf("  -h\t\tshow this help information\n");
+	printf("  -k\t\treport memory in kilobytes\n");
+	printf("  -l\t\tshow long (full) command information\n");
+	printf("  -m\t\treport memory in megabytes\n");
 	printf("  -o file\tdump data to json formatted file\n");
+	printf("  -q\t\trun quietly, useful for -o output only\n");
+	printf("  -s\t\tshow short command information\n");
 }
 
 int main(int argc, char **argv)
@@ -891,20 +976,47 @@ int main(int argc, char **argv)
 	int count = 0;
 
 	for (;;) {
-		int c = getopt(argc, argv, "ho:q");
+		int c = getopt(argc, argv, "dghklmo:qs");
 		if (c == -1)
 			break;
 		switch (c) {
+		case 'd':
+			opt_flags |= OPT_DIRNAME_STRIP;
+			break;
+		case 'g':
+			opt_flags |= OPT_MEM_IN_GBYTES;
+			break;
 		case 'h':
 			show_usage();
 			exit(EXIT_SUCCESS);
+		case 'k':
+			opt_flags |= OPT_MEM_IN_KBYTES;
+			break;
+		case 'l':
+			opt_flags |= OPT_CMD_LONG;
+			break;
+		case 'm':
+			opt_flags |= OPT_MEM_IN_MBYTES;
+			break;
 		case 'o':
 			json_filename = optarg;
 			break;
 		case 'q':
 			opt_flags |= OPT_QUIET;
 			break;
+		case 's':
+			opt_flags |= OPT_CMD_SHORT;
+			break;
 		}
+	}
+
+	if (count_bits(opt_flags & OPT_CMD_ALL) > 1) {
+		fprintf(stderr, "Cannot have -l and -s at same time.\n");
+		exit(EXIT_FAILURE);
+	}
+	if (count_bits(opt_flags & OPT_MEM_ALL) > 1) {
+		fprintf(stderr, "Cannot have -k, -m, -g at same time.\n");
+		exit(EXIT_FAILURE);
 	}
 
 	if (optind < argc) {
@@ -936,6 +1048,7 @@ int main(int argc, char **argv)
 	if (count == 0) {
 		mem_get_all_pids(&mem_info_new);
 		mem_dump(json_file, mem_info_new);
+		mem_report_size();
 		goto tidy;
 	} else {
 		/*
@@ -998,6 +1111,7 @@ int main(int argc, char **argv)
 			whence = timeval_add(&duration, &whence);
 		}
 		mem_cache_free_list(mem_info_old);
+		mem_report_size();
 
 		if (json_file) {
 			fprintf(json_file, "    ]\n");
