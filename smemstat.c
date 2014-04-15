@@ -439,18 +439,25 @@ static uname_cache_t *uname_cache_find(const uid_t uid)
 			return uname;
 	}
 
-	if ((pw = getpwuid(uid)) == NULL)
-		return NULL;
-
 	if ((uname = calloc(1, sizeof(*uname))) == NULL) {
 		out_of_memory("allocating pwd cache item");
 		return NULL;
 	}
 
-	if ((uname->name = strdup(pw->pw_name)) == NULL) {
+	if ((pw = getpwuid(uid)) == NULL) {
+		char buf[16];
+
+		snprintf(buf, sizeof(buf), "%i", uid);
+		uname->name = strdup(buf);
+	} else {
+		uname->name = strdup(pw->pw_name);
+	}
+
+	if (uname->name == NULL) {
 		out_of_memory("allocating pwd cache item");
 		return NULL;
 	}
+
 	uname->uid = uid;
 	uname->next = uname_cache[h];
 	uname_cache[h] = uname;
@@ -687,6 +694,10 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 		if (!strncmp(buffer, "Uid:", 4)) {
 			if (sscanf(buffer + 5, "%9i", &new_m->uid) == 1) {
 				new_m->uname = uname_cache_find(new_m->uid);
+				if (new_m->uname == NULL) {
+					fclose(fp);
+					return -1;
+				}
 				break;
 			}
 		}
@@ -717,7 +728,10 @@ static int mem_get_all_pids(mem_info_t **mem, size_t *npids)
 			continue;
 
 		pid = (pid_t)strtoul(entry->d_name, NULL, 10);
-		mem_get_by_proc(pid, mem);
+		if (mem_get_by_proc(pid, mem) < 0) {
+			closedir(dir);
+			return -1;
+		}
 		(*npids)++;
 	}
 
@@ -1104,7 +1118,8 @@ int main(int argc, char **argv)
 	}
 
 	if (count == 0) {
-		mem_get_all_pids(&mem_info_new, &npids);
+		if (mem_get_all_pids(&mem_info_new, &npids) < 0)
+			goto tidy;
 		mem_dump(json_file, mem_info_new);
 		mem_report_size();
 		goto tidy;
@@ -1114,7 +1129,8 @@ int main(int argc, char **argv)
 		 *  the amount of mem infos we alloc during
 		 *  sampling
 		 */
-		mem_get_all_pids(&mem_info_old, &npids);
+		if (mem_get_all_pids(&mem_info_old, &npids) < 0)
+			goto free_cache;
 		mem_cache_prealloc((npids * 5) / 4);
 
 		duration.tv_sec = (time_t)duration_secs;
@@ -1159,7 +1175,8 @@ int main(int argc, char **argv)
 				}
 			}
 
-			mem_get_all_pids(&mem_info_new, &npids);
+			if (mem_get_all_pids(&mem_info_new, &npids) < 0)
+				goto free_cache;
 			mem_dump_diff(json_file, mem_info_old, mem_info_new, timeval_double(&duration));
 
 			mem_cache_free_list(mem_info_old);
@@ -1168,12 +1185,14 @@ int main(int argc, char **argv)
 
 			whence = timeval_add(&duration, &whence);
 		}
-		mem_cache_free_list(mem_info_old);
 		mem_report_size();
 
 		if (json_file) {
 			fprintf(json_file, "    ]\n");
 		}
+
+free_cache:
+		mem_cache_free_list(mem_info_old);
 	}
 
 tidy:
