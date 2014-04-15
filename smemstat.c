@@ -347,7 +347,7 @@ static inline unsigned long hash_uid(const uid_t uid)
  *  uname_cache_find()
  *	lookup uname info on uid and cache data
  */
-static uname_cache_t *uname_cache_find(uid_t uid)
+static uname_cache_t *uname_cache_find(const uid_t uid)
 {
 	struct passwd *pw;
 	uname_cache_t *uname;
@@ -514,7 +514,7 @@ static void mem_cache_cleanup(void)
  *  mem_get_by_proc()
  *	get mem info for a specific proc
  */
-static int mem_get_by_proc(pid_t pid, mem_info_t **mem)
+static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 {
 	FILE *fp;
 	char path[PATH_MAX];
