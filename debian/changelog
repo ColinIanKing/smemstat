@@ -1,3 +1,10 @@
+smemstat (0.01.02) unstable; urgency=low
+
+  * Makefile: bump version
+  * Remove Delta symbol, report that the periodic output is change in memory
+
+ -- Colin King <colin.king@canonical.com>  Tue, 15 Apr 2014 11:38:00 +0100
+
 smemstat (0.01.01) trusty; urgency=low
 
   * Add COPYING file
