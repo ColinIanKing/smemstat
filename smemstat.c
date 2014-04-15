@@ -545,6 +545,12 @@ static int mem_get_entry(FILE *fp, mem_info_t *mem)
 	return 0;
 }
 
+/*
+ *  mem_cache_alloc()
+ *	allocate a mem_info_t, first try the cache of
+ *	unused mem_info's, if none available fall back
+ *	to calloc
+ */
 static mem_info_t *mem_cache_alloc(void)
 {
 	mem_info_t *mem;
@@ -565,12 +571,22 @@ static mem_info_t *mem_cache_alloc(void)
 	return mem;
 }
 
+/*
+ *  mem_cache_free()
+ *	free a mem_info_t by just adding it to the
+ *	mem_info_cache free list
+ */
 static void mem_cache_free(mem_info_t *mem)
 {
 	mem->next = mem_info_cache;
 	mem_info_cache = mem;
 }
 
+/*
+ *  mem_cache_free_list()
+ *	free up a list of mem_info_t items by
+ *	adding them to the mem_info_cache free list
+ */
 static void mem_cache_free_list(mem_info_t *mem)
 {
 	while (mem) {
@@ -581,6 +597,12 @@ static void mem_cache_free_list(mem_info_t *mem)
 	}
 }
 
+/*
+ *  mem_cache_prealloc()
+ *	create some spare mem_info_t items on
+ *	the free list so that we don't keep on
+ *	hitting the heap during the run
+ */
 static void mem_cache_prealloc(const size_t n)
 {
 	size_t i;
@@ -593,6 +615,10 @@ static void mem_cache_prealloc(const size_t n)
 	}
 }
 
+/*
+ *  mem_cache_cleanup()
+ *	free the mem_info_cache free list
+ */
 static void mem_cache_cleanup(void)
 {
 	while (mem_info_cache) {
@@ -725,6 +751,10 @@ static void mem_delta(mem_info_t *mem_new, mem_info_t *mem_old_list)
 	mem_new->d_swap = mem_new->swap;
 }
 
+/*
+ *  mem_cmdline()
+ *	get command line if it is defined
+ */
 static inline char *mem_cmdline(const mem_info_t *m)
 {
 	if (m->proc && m->proc->cmdline)
@@ -735,6 +765,7 @@ static inline char *mem_cmdline(const mem_info_t *m)
 
 /*
  *  mem_dump()
+ *	dump out memory usage
  */
 static int mem_dump(FILE *json, mem_info_t *mem_info)
 {
