@@ -55,36 +55,36 @@
 #define OPT_MEM_ALL		(OPT_MEM_IN_KBYTES | OPT_MEM_IN_MBYTES | OPT_MEM_IN_GBYTES)
 
 /* process specific information */
-typedef struct proc_info {
+typedef struct __attribute__ ((__packed__)) proc_info {
 	pid_t		pid;		/* PID */
+	bool		kernel_thread;	/* true if process is kernel thread */
 	char		*cmdline;	/* Process name from cmdline */
 	struct proc_info *next;		/* next in hash */
 } proc_info_t;
 
 /* UID cache */
-typedef struct uname_cache_t {
+typedef struct __attribute__ ((__packed__)) uname_cache_t {
 	uid_t		uid;		/* User UID */
 	char *		name;		/* User name */
 	struct uname_cache_t *next;
 } uname_cache_t;
 
 /* wakeup event information per process */
-typedef struct mem_info_t {
+typedef struct __attribute__ ((__packed__)) mem_info_t {
 	pid_t		pid;		/* process id */
-	proc_info_t 	*proc;		/* cached process info */
 	uid_t		uid;		/* process' UID */
+	proc_info_t 	*proc;		/* cached process info */
 	uname_cache_t	*uname;		/* cached uname info */
 	int64_t		size;		/* region size */
 	int64_t		rss;		/* RSS size */
 	int64_t		pss;		/* PSS size */
 	int64_t		uss;		/* USS size */
 	int64_t		swap;		/* Swapped out size */
-	bool		alive;		/* true if proc is alive */
-
 	int64_t		d_rss;		/* Delta RSS */
 	int64_t		d_pss;		/* Delta PSS */
 	int64_t		d_uss;		/* Delta USS */
 	int64_t		d_swap;		/* Delta swap */
+	bool		alive;		/* true if proc is alive */
 
 	struct mem_info_t *d_next;	/* sotted deltas by total */
 	struct mem_info_t *s_next;	/* sorted by total */
@@ -301,13 +301,12 @@ static proc_info_t *proc_cache_add_at_hash_index(
 	}
 
 	p->pid  = pid;
-	if (opt_flags & OPT_CMD_COMM)
+	p->cmdline = get_pid_cmdline(pid);
+	if (p->cmdline == NULL)
+		p->kernel_thread = true;
+
+	if ((p->cmdline == NULL) || (opt_flags & OPT_CMD_COMM))
 		p->cmdline = get_pid_comm(pid);
-	else {
-		p->cmdline = get_pid_cmdline(pid);
-		if (p->cmdline == NULL)
-			p->cmdline = get_pid_comm(pid);
-	}
 	p->next = proc_cache_hash[h];
 	proc_cache_hash[h] = p;
 
@@ -582,6 +581,18 @@ static void mem_cache_free_list(mem_info_t *mem)
 	}
 }
 
+static void mem_cache_prealloc(const size_t n)
+{
+	size_t i;
+
+	for (i = 0; i < n; i++) {
+		mem_info_t *mem;
+
+		if ((mem = calloc(1, sizeof(*mem))) != NULL)
+			mem_cache_free_list(mem);
+	}
+}
+
 static void mem_cache_cleanup(void)
 {
 	while (mem_info_cache) {
@@ -610,7 +621,7 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 	if ((proc = proc_cache_find_by_pid(pid)) == NULL)
 		return 0;	/* It died before we could get info */
 
-	if (!proc->cmdline)
+	if (proc->kernel_thread)
 		return 0;	/* Ignore */
 
 	snprintf(path, sizeof(path), "/proc/%i/smaps", pid);
@@ -663,10 +674,11 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
  *  mem_get_all_pids()
  *	scan mem and get mmap info
  */
-static int mem_get_all_pids(mem_info_t **mem)
+static int mem_get_all_pids(mem_info_t **mem, size_t *npids)
 {
 	DIR *dir;
 	struct dirent *entry;
+	*npids = 0;
 
 	if ((dir = opendir("/proc")) == NULL) {
 		fprintf(stderr, "Cannot read directory /proc\n");
@@ -680,6 +692,7 @@ static int mem_get_all_pids(mem_info_t **mem)
 
 		pid = (pid_t)strtoul(entry->d_name, NULL, 10);
 		mem_get_by_proc(pid, mem);
+		(*npids)++;
 	}
 
 	closedir(dir);
@@ -952,7 +965,6 @@ static void handle_sigint(int dummy)
 	stop_smemstat = true;
 }
 
-
 /*
  *  show_usage()
  *	show how to use
@@ -985,6 +997,7 @@ int main(int argc, char **argv)
 	struct timeval tv1, tv2, duration, whence;
 	bool forever = true;
 	int count = 0;
+	size_t npids;
 
 	for (;;) {
 		int c = getopt(argc, argv, "cdghklmo:qs");
@@ -1060,7 +1073,7 @@ int main(int argc, char **argv)
 	}
 
 	if (count == 0) {
-		mem_get_all_pids(&mem_info_new);
+		mem_get_all_pids(&mem_info_new, &npids);
 		mem_dump(json_file, mem_info_new);
 		mem_report_size();
 		goto tidy;
@@ -1070,10 +1083,8 @@ int main(int argc, char **argv)
 		 *  the amount of mem infos we alloc during
 		 *  sampling
 		 */
-		mem_get_all_pids(&mem_info_new);
-		mem_cache_free_list(mem_info_new);
-		mem_info_new = NULL;
-		mem_get_all_pids(&mem_info_old);
+		mem_get_all_pids(&mem_info_old, &npids);
+		mem_cache_prealloc((npids * 5) / 4);
 
 		duration.tv_sec = (time_t)duration_secs;
 		duration.tv_usec = (suseconds_t)(duration_secs * 1000000.0) - (duration.tv_sec * 1000000);
@@ -1115,7 +1126,7 @@ int main(int argc, char **argv)
 				}
 			}
 
-			mem_get_all_pids(&mem_info_new);
+			mem_get_all_pids(&mem_info_new, &npids);
 			mem_dump_diff(json_file, mem_info_old, mem_info_new, timeval_double(&duration));
 
 			mem_cache_free_list(mem_info_old);
