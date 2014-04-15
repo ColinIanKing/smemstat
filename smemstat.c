@@ -455,6 +455,7 @@ static uname_cache_t *uname_cache_find(const uid_t uid)
 
 	if (uname->name == NULL) {
 		out_of_memory("allocating pwd cache item");
+		free(uname);
 		return NULL;
 	}
 
