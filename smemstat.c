@@ -566,9 +566,10 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 
 	while (fgets(buffer, sizeof(buffer), fp) != NULL) {
 		if (!strncmp(buffer, "Uid:", 4)) {
-			sscanf(buffer + 5, "%9i", &new_m->uid);
-			new_m->uname = uname_cache_find(new_m->uid);
-			break;
+			if (sscanf(buffer + 5, "%9i", &new_m->uid) == 1) {
+				new_m->uname = uname_cache_find(new_m->uid);
+				break;
+			}
 		}
 	}
 	fclose(fp);
