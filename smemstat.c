@@ -929,7 +929,7 @@ static int mem_dump_diff(
 	}
 
 	if (!(opt_flags & OPT_QUIET))
-		printf("  PID      ΔSwap      ΔUSS      ΔPSS      ΔRSS User       Command\n");
+		printf("  PID       Swap       USS       PSS       RSS User       Command\n");
 	for (m = sorted_deltas; m; m = m->d_next) {
 		const char *cmd = mem_cmdline(m);
 
@@ -1123,11 +1123,13 @@ int main(int argc, char **argv)
 		whence.tv_usec = 0;
 		gettimeofday(&tv1, NULL);
 
+		printf("Change in memory:\n");
 		signal(SIGINT, &handle_sigint);
 
 		if (json_file) {
 			fprintf(json_file, "    \"periodic-samples\":[\n");
 		}
+
 
 		while (!stop_smemstat && (forever || count--)) {
 			struct timeval tv;
