@@ -1,3 +1,12 @@
+smemstat (0.01.04-1) unstable; urgency=low
+
+  * Initial Debian release (Closes: #744875)
+  * Makefile: bump version once more
+  * Makefile: add scripts dir to dist tarball
+  * Makefile: fix dist
+
+ -- Colin King <colin.king@canonical.com>  Tue, 15 Apr 2014 18:39:00 +0100
+
 smemstat (0.01.03) unstable; urgency=low
 
   * Makefile: bump version
