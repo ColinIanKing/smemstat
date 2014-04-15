@@ -1,3 +1,18 @@
+smemstat (0.01.01) trusty; urgency=low
+
+  * Add COPYING file
+  * smemstat-parse.py: remove old cruft
+  * Add some more comments to function prototypes
+  * Makefile: bump version
+  * Add better kernel thread detection and some memory tweaks
+  * Remove comm field, re-use cmdline and add -c option
+  * Add -d, -l, -s, -k, -m, -g options
+  * Check uid sscan return and only fetch name if valid
+  * Specifiy sscanf format width to stop cppcheck warnings
+  * constify some args
+
+ -- Colin King <colin.king@canonical.com>  Tue, 15 Apr 2014 11:14:00 +0100
+
 smemstat (0.01.00) trusty; urgency=low
 
   * Initial version 
