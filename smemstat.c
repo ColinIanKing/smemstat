@@ -46,17 +46,17 @@
 #define OPT_QUIET		(0x00000001)
 #define OPT_CMD_SHORT		(0x00000002)
 #define OPT_CMD_LONG		(0x00000004)
-#define OPT_CMD_ALL		(OPT_CMD_SHORT | OPT_CMD_LONG)
-#define OPT_DIRNAME_STRIP	(0x00000008)
-#define OPT_MEM_IN_KBYTES	(0x00000010)
-#define OPT_MEM_IN_MBYTES	(0x00000020)
-#define OPT_MEM_IN_GBYTES	(0x00000040)
+#define OPT_CMD_COMM		(0x00000008)
+#define OPT_CMD_ALL		(OPT_CMD_SHORT | OPT_CMD_LONG | OPT_CMD_COMM)
+#define OPT_DIRNAME_STRIP	(0x00000010)
+#define OPT_MEM_IN_KBYTES	(0x00000020)
+#define OPT_MEM_IN_MBYTES	(0x00000040)
+#define OPT_MEM_IN_GBYTES	(0x00000080)
 #define OPT_MEM_ALL		(OPT_MEM_IN_KBYTES | OPT_MEM_IN_MBYTES | OPT_MEM_IN_GBYTES)
 
 /* process specific information */
 typedef struct proc_info {
 	pid_t		pid;		/* PID */
-	char		*comm;		/* Kernel process comm name */
 	char		*cmdline;	/* Process name from cmdline */
 	struct proc_info *next;		/* next in hash */
 } proc_info_t;
@@ -301,8 +301,13 @@ static proc_info_t *proc_cache_add_at_hash_index(
 	}
 
 	p->pid  = pid;
-	p->cmdline = get_pid_cmdline(pid);
-	p->comm = get_pid_comm(pid);
+	if (opt_flags & OPT_CMD_COMM)
+		p->cmdline = get_pid_comm(pid);
+	else {
+		p->cmdline = get_pid_cmdline(pid);
+		if (p->cmdline == NULL)
+			p->cmdline = get_pid_comm(pid);
+	}
 	p->next = proc_cache_hash[h];
 	proc_cache_hash[h] = p;
 
@@ -348,7 +353,6 @@ static void proc_cache_cleanup(void)
 		while (p) {
 			proc_info_t *next = p->next;
 
-			free(p->comm);
 			free(p->cmdline);
 			free(p);
 
@@ -708,6 +712,14 @@ static void mem_delta(mem_info_t *mem_new, mem_info_t *mem_old_list)
 	mem_new->d_swap = mem_new->swap;
 }
 
+static inline char *mem_cmdline(const mem_info_t *m)
+{
+	if (m->proc && m->proc->cmdline)
+		return m->proc->cmdline;
+
+	return "<unknown>";
+}
+
 /*
  *  mem_dump()
  */
@@ -741,8 +753,7 @@ static int mem_dump(FILE *json, mem_info_t *mem_info)
 		printf("  PID       Swap       USS       PSS       RSS User       Command\n");
 
 	for (m = sorted; m; m = m->s_next) {
-		char *cmd =
-			m->proc ? (m->proc->cmdline ? m->proc->cmdline : m->proc->comm) : "<unknown>";
+		const char *cmd = mem_cmdline(m);
 		mem_to_str((double)m->swap, s_swap, sizeof(s_swap));
 		mem_to_str((double)m->uss, s_uss, sizeof(s_uss));
 		mem_to_str((double)m->pss, s_pss, sizeof(s_pss));
@@ -876,8 +887,7 @@ static int mem_dump_diff(
 	if (!(opt_flags & OPT_QUIET))
 		printf("  PID      ΔSwap      ΔUSS      ΔPSS      ΔRSS User       Command\n");
 	for (m = sorted_deltas; m; m = m->d_next) {
-		char *cmd =
-			m->proc ? (m->proc->cmdline ? m->proc->cmdline : m->proc->comm) : "<unknown>";
+		const char *cmd = mem_cmdline(m);
 
 		mem_to_str((double)m->d_swap / duration, s_swap, sizeof(s_swap));
 		mem_to_str((double)m->d_uss / duration, s_uss, sizeof(s_uss));
@@ -952,6 +962,7 @@ static void show_usage(void)
 	printf("%s, version %s\n\n", APP_NAME, VERSION);
 	printf("Usage: %s [options] [duration] [count]\n", APP_NAME);
 	printf("Options are:\n");
+	printf("  -c\t\tget command name from processes comm field\n");
 	printf("  -d\t\tstrip directory basename off command information\n");
 	printf("  -g\t\treport memory in gigabytes\n");
 	printf("  -h\t\tshow this help information\n");
@@ -976,10 +987,13 @@ int main(int argc, char **argv)
 	int count = 0;
 
 	for (;;) {
-		int c = getopt(argc, argv, "dghklmo:qs");
+		int c = getopt(argc, argv, "cdghklmo:qs");
 		if (c == -1)
 			break;
 		switch (c) {
+		case 'c':
+			opt_flags |= OPT_CMD_COMM;
+			break;
 		case 'd':
 			opt_flags |= OPT_DIRNAME_STRIP;
 			break;
@@ -1011,7 +1025,7 @@ int main(int argc, char **argv)
 	}
 
 	if (count_bits(opt_flags & OPT_CMD_ALL) > 1) {
-		fprintf(stderr, "Cannot have -l and -s at same time.\n");
+		fprintf(stderr, "Cannot have -c, -l, -s at same time.\n");
 		exit(EXIT_FAILURE);
 	}
 	if (count_bits(opt_flags & OPT_MEM_ALL) > 1) {
