@@ -1,3 +1,11 @@
+smemstat (0.01.03) unstable; urgency=low
+
+  * Makefile: bump version
+  * Free uname if uname->name can't be allocated
+  * Add some extra checking for failed uid lookups and alloc failures
+
+ -- Colin King <colin.king@canonical.com>  Tue, 15 Apr 2014 16:06:00 +0100
+
 smemstat (0.01.02) unstable; urgency=low
 
   * Makefile: bump version
