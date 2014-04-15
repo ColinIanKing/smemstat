@@ -22,21 +22,6 @@
 #
 import sys, os, json
 
-def r2tostr(r2):
-	if r2 < 0.4:
-		return "very poor"
-	if r2 < 0.75:
-		return "poor"
-	if r2 < 0.80:
-		return "fair"
-	if r2 < 0.90:
-		return "good"
-	if r2 < 0.95:
-		return "very good"
-	if r2 < 1.0:
-		return "excellent"
-	return "perfect"
-
 if len(sys.argv) != 2:
         sys.stderr.write("Usage: " + sys.argv[0] + " smemstat.json\n")
         os._exit(1)
