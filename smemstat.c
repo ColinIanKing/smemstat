@@ -135,15 +135,15 @@ static void mem_to_str(const double val, char *buf, const size_t buflen)
 	memset(buf, 0, buflen);
 
 	if (opt_flags & OPT_MEM_IN_KBYTES) {
-		snprintf(buf, buflen, "%9.0f", val);
+		snprintf(buf, buflen, "%9.0f", val / 1024.0);
 		return;
 	}
 	if (opt_flags & OPT_MEM_IN_MBYTES) {
-		snprintf(buf, buflen, "%9.0f", val / 1024);
+		snprintf(buf, buflen, "%9.3f", val / (1024.0 * 1024.0));
 		return;
 	}
 	if (opt_flags & OPT_MEM_IN_GBYTES) {
-		snprintf(buf, buflen, "%9.3f", val / (1024 * 1024));
+		snprintf(buf, buflen, "%9.3f", val / (1024.0 * 1024.0 * 1024.0));
 		return;
 	}
 
