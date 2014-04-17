@@ -1,3 +1,12 @@
+smemstat (0.01.05-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Add README to dist
+  * Add README file
+  * -k, -m, -g options are 1024 times too small
+
+ -- Colin King <colin.king@canonical.com>  Thu, 17 Apr 2014 10:37:30 +0100
+
 smemstat (0.01.04-1) unstable; urgency=low
 
   * Initial Debian release (Closes: #744875)
