@@ -1,0 +1,8 @@
+smemstat can output data in a JSON format using the -o option.
+
+smemstat -o smemstat.json
+
+An example python parser for this data is available as:
+scripts/smemstat-parse.py
+
+..to illustrate how to read and parse this data.
