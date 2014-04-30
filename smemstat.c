@@ -171,12 +171,11 @@ static void mem_report_size(void)
 
 	if (!(opt_flags & OPT_MEM_ALL))
 		return;
-
-	if (opt_flags & OPT_MEM_IN_KBYTES) 
+	else if (opt_flags & OPT_MEM_IN_KBYTES) 
 		unit = "kilo";
-	if (opt_flags & OPT_MEM_IN_MBYTES) 
+	else if (opt_flags & OPT_MEM_IN_MBYTES) 
 		unit = "mega";
-	if (opt_flags & OPT_MEM_IN_GBYTES) 
+	else if (opt_flags & OPT_MEM_IN_GBYTES) 
 		unit = "giga";
 
 	printf("Note: Memory reported in units of %sbytes.\n", unit);
