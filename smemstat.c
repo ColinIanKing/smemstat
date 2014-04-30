@@ -17,8 +17,6 @@
  *
  * Author: Colin Ian King <colin.king@canonical.com>
  */
-#define _GNU_SOURCE
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -255,8 +253,16 @@ static char *get_pid_cmdline(const pid_t pid)
 		}
 	}
 
-	if (opt_flags & OPT_DIRNAME_STRIP)
-		return strdup(basename(buffer));
+	if (opt_flags & OPT_DIRNAME_STRIP) {
+		char *base = buffer;
+		for (ptr = buffer; *ptr; ptr++) {
+			if (isblank(*ptr))
+				break;
+			if (*ptr == '/')
+				base = ptr + 1;
+		}
+		return strdup(base);
+	}
 
 	return strdup(buffer);
 }
