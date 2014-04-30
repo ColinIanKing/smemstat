@@ -1085,6 +1085,9 @@ int main(int argc, char **argv)
 		case 's':
 			opt_flags |= OPT_CMD_SHORT;
 			break;
+		default:
+			show_usage();
+			exit(EXIT_FAILURE);
 		}
 	}
 
