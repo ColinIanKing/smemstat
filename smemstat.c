@@ -114,7 +114,7 @@ static unsigned int count_bits(const unsigned int val)
 {
 	register unsigned int c, n = val;
 
-	for (c = 0; n; c++) 
+	for (c = 0; n; c++)
 		n &= n - 1;
 
 	return c;
@@ -171,11 +171,11 @@ static void mem_report_size(void)
 
 	if (!(opt_flags & OPT_MEM_ALL))
 		return;
-	else if (opt_flags & OPT_MEM_IN_KBYTES) 
+	else if (opt_flags & OPT_MEM_IN_KBYTES)
 		unit = "kilo";
-	else if (opt_flags & OPT_MEM_IN_MBYTES) 
+	else if (opt_flags & OPT_MEM_IN_MBYTES)
 		unit = "mega";
-	else if (opt_flags & OPT_MEM_IN_GBYTES) 
+	else if (opt_flags & OPT_MEM_IN_GBYTES)
 		unit = "giga";
 
 	printf("Note: Memory reported in units of %sbytes.\n", unit);
@@ -664,9 +664,8 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 		return 0;	/* Ignore */
 
 	snprintf(path, sizeof(path), "/proc/%i/smaps", pid);
-	if ((fp = fopen(path, "r")) == NULL) {
+	if ((fp = fopen(path, "r")) == NULL)
 		return 0;	/* Gone away? */
-	}
 
 	memset(&m, 0, sizeof(m));
 
