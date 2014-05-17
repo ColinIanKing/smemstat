@@ -1022,19 +1022,20 @@ static void handle_sigint(int dummy)
  */
 static void show_usage(void)
 {
-	printf("%s, version %s\n\n", APP_NAME, VERSION);
-	printf("Usage: %s [options] [duration] [count]\n", APP_NAME);
-	printf("Options are:\n");
-	printf("  -c\t\tget command name from processes comm field\n");
-	printf("  -d\t\tstrip directory basename off command information\n");
-	printf("  -g\t\treport memory in gigabytes\n");
-	printf("  -h\t\tshow this help information\n");
-	printf("  -k\t\treport memory in kilobytes\n");
-	printf("  -l\t\tshow long (full) command information\n");
-	printf("  -m\t\treport memory in megabytes\n");
-	printf("  -o file\tdump data to json formatted file\n");
-	printf("  -q\t\trun quietly, useful for -o output only\n");
-	printf("  -s\t\tshow short command information\n");
+	printf("%s, version %s\n\n"
+		"Usage: %s [options] [duration] [count]\n"
+		"Options are:\n"
+		"  -c\t\tget command name from processes comm field\n"
+		"  -d\t\tstrip directory basename off command information\n"
+		"  -g\t\treport memory in gigabytes\n"
+		"  -h\t\tshow this help information\n"
+		"  -k\t\treport memory in kilobytes\n"
+		"  -l\t\tshow long (full) command information\n"
+		"  -m\t\treport memory in megabytes\n"
+		"  -o file\tdump data to json formatted file\n"
+		"  -q\t\trun quietly, useful for -o output only\n"
+		"  -s\t\tshow short command information\n",
+		APP_NAME, VERSION, APP_NAME);
 }
 
 int main(int argc, char **argv)
