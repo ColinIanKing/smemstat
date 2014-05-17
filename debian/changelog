@@ -1,3 +1,13 @@
+smemstat (0.01.07-1) unstable; urgency=medium
+
+  * Makefile; bump version
+  * Minor tidy up of whitespacing
+  * Remove extraneous printfs in help
+  * Improve parsing of duratio and count
+  * Constify arg in count_bits
+
+ -- Colin King <colin.king@canonical.com>  Sat, 17 May 2014 15:32:11 +0100
+
 smemstat (0.01.06-1) unstable; urgency=medium
 
   * Makefile: bump version
