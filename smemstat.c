@@ -1047,7 +1047,7 @@ int main(int argc, char **argv)
 	double duration_secs = 1.0;
 	struct timeval tv1, tv2, duration, whence;
 	bool forever = true;
-	int count = 0;
+	long int count = 0;
 	size_t npids;
 
 	for (;;) {
@@ -1101,7 +1101,12 @@ int main(int argc, char **argv)
 	}
 
 	if (optind < argc) {
-		duration_secs = atof(argv[optind++]);
+		errno = 0;
+		duration_secs = strtof(argv[optind++], NULL);
+		if (errno) {
+			fprintf(stderr, "Invalid or out of range value for duration\n");
+			exit(EXIT_FAILURE);
+		}
 		if (duration_secs < 1.0) {
 			fprintf(stderr, "Duration must be 1.0 or more seconds.\n");
 			exit(EXIT_FAILURE);
@@ -1111,7 +1116,12 @@ int main(int argc, char **argv)
 
 	if (optind < argc) {
 		forever = false;
-		count = atoi(argv[optind++]);
+		errno = 0;
+		count = strtol(argv[optind++], NULL, 10);
+		if (errno) {
+			fprintf(stderr, "Invalid or out of range value for count\n");
+			exit(EXIT_FAILURE);
+		}
 		if (count < 1) {
 			fprintf(stderr, "Count must be > 0\n");
 			exit(EXIT_FAILURE);
