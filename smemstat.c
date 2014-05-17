@@ -110,9 +110,9 @@ static void out_of_memory(const char *msg)
  *  count_bits()
  *	count bits set, from C Programming Language 2nd Ed
  */
-static unsigned int count_bits(unsigned int n)
+static unsigned int count_bits(const unsigned int val)
 {
-	unsigned int c;
+	register unsigned int c, n = val;
 
 	for (c = 0; n; c++) 
 		n &= n - 1;
