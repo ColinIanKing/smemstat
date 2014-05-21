@@ -1158,7 +1158,7 @@ int main(int argc, char **argv)
 		whence.tv_usec = 0;
 		gettimeofday(&tv1, NULL);
 
-		printf("Change in memory:\n");
+		printf("Change in memory (average per second):\n");
 		signal(SIGINT, &handle_sigint);
 
 		if (json_file) {
