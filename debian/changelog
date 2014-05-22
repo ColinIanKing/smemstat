@@ -1,3 +1,10 @@
+smemstat (0.01.08-1) unstable; urgency=medium
+
+  * Bump version
+  * Man page: fix typo '-r' should be '-o' (Closes: #748899)
+
+ -- Colin King <colin.king@canonical.com>  Thu, 22 May 2014 09:23:34 +0100
+
 smemstat (0.01.07-1) unstable; urgency=medium
 
   * Makefile; bump version
