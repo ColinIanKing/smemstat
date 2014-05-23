@@ -949,8 +949,9 @@ static int mem_dump_diff(
 
 	if (!(opt_flags & OPT_QUIET))
 		printf("  PID       Swap       USS       PSS       RSS User       Command\n");
-	for (m = sorted_deltas; m; m = m->d_next) {
+	for (m = sorted_deltas; m; ) {
 		const char *cmd = mem_cmdline(m);
+		mem_info_t *next = m->d_next;
 
 		mem_to_str((double)m->d_swap / duration, s_swap, sizeof(s_swap));
 		mem_to_str((double)m->d_uss / duration, s_uss, sizeof(s_uss));
@@ -977,6 +978,8 @@ static int mem_dump_diff(
 			fprintf(json, "          }%s\n",
 				m->d_next ? "," : "");
 		}
+		m->d_next = NULL;	/* Nullify for next round */
+		m = next;
 	}
 
 	mem_to_str((double)t_d_swap / duration, s_swap, sizeof(s_swap));
