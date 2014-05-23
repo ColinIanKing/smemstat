@@ -1,3 +1,10 @@
+smemstat (0.01.09-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Nullify d_next ptr to stop list being doubly linked
+
+ -- Colin King <colin.king@canonical.com>  Fri, 23 May 2014 18:09:00 +0100
+
 smemstat (0.01.08-1) unstable; urgency=medium
 
   * Bump version
