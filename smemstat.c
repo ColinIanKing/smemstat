@@ -167,7 +167,7 @@ static void mem_to_str(const double val, char *buf, const size_t buflen)
  */
 static void mem_report_size(void)
 {
-	char *unit;
+	char *unit = "";
 
 	if (!(opt_flags & OPT_MEM_ALL))
 		return;
