@@ -17,6 +17,8 @@
  *
  * Author: Colin Ian King <colin.king@canonical.com>
  */
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -32,6 +34,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <libgen.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -89,13 +92,19 @@ typedef struct __attribute__ ((__packed__)) mem_info_t {
 	struct mem_info_t *next;	/* for free list */
 } mem_info_t;
 
+typedef struct pid_list {
+	pid_t		pid;
+	char 		*name;
+	struct pid_list	*next;
+} pid_list_t;
+
 static uname_cache_t *uname_cache[UNAME_HASH_TABLE_SIZE];
 static proc_info_t *proc_cache_hash[PROC_HASH_TABLE_SIZE];
 
 static bool stop_smemstat = false;	/* set by sighandler */
 static unsigned int opt_flags;		/* options */
 static mem_info_t *mem_info_cache = NULL;
-
+static pid_list_t *pids = NULL;
 
 /*
  *  out_of_memory()
@@ -663,6 +672,20 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 	if (proc->kernel_thread)
 		return 0;	/* Ignore */
 
+	if (pids) {
+		pid_list_t *p;
+		char *tmp = basename(proc->cmdline);
+
+		for (p = pids; p; p = p->next) {
+			if (p->pid == pid)
+				break;
+			if (p->name && strcmp(p->name, tmp) == 0)
+				break;
+		}
+		if (!p)
+			return 0;
+	}
+
 	snprintf(path, sizeof(path), "/proc/%i/smaps", pid);
 	if ((fp = fopen(path, "r")) == NULL)
 		return 0;	/* Gone away? */
@@ -733,6 +756,7 @@ static int mem_get_all_pids(mem_info_t **mem, size_t *npids)
 			continue;
 
 		pid = (pid_t)strtoul(entry->d_name, NULL, 10);
+
 		if (mem_get_by_proc(pid, mem) < 0) {
 			closedir(dir);
 			return -1;
@@ -1019,6 +1043,77 @@ static void handle_sigint(int dummy)
 }
 
 /*
+ * pid_list_cleanup()
+ *	free pid list
+ */
+static void pid_list_cleanup(void)
+{
+	pid_list_t *p;
+
+	for (p = pids; p; ) {
+		pid_list_t *next = p->next;
+		if (p->name)
+			free(p->name);
+		free(p);
+		p = next;
+	}
+}
+
+/*
+ *  parse_pid_list()
+ *	parse list of process IDs,
+ *	collect process info in pids list
+ */
+static int parse_pid_list(char *arg)
+{
+	char *str, *token, *saveptr = NULL;
+	pid_list_t *p;
+
+	for (str = arg; (token = strtok_r(str, ",", &saveptr)) != NULL; str = NULL) {
+		if (isdigit(token[0])) {
+			pid_t pid;
+
+			errno = 0;
+			pid = strtol(token, NULL, 10);
+			if (errno) {
+				fprintf(stderr, "Invalid pid specified.\n");
+				pid_list_cleanup();
+				return -1;
+			}
+			for (p = pids; p; p = p->next) {
+				if (p->pid == pid)
+					break;
+			}
+			if (!p) {
+				if ((p = calloc(1, sizeof(*p))) == NULL)
+					goto nomem;
+				p->pid = pid;
+				p->name = NULL;
+				p->next = pids;
+				pids = p;
+			}
+		} else {
+			if ((p = calloc(1, sizeof(*p))) == NULL)
+				goto nomem;
+			if ((p->name = strdup(token)) == NULL) {
+				free(p);
+				goto nomem;
+			}
+			p->pid = 0;
+			p->next = pids;
+			pids = p;
+		}
+	}
+
+	return 0;
+nomem:
+	out_of_memory("allocating pid list.\n");
+	pid_list_cleanup();
+	return -1;
+	
+}
+
+/*
  *  show_usage()
  *	show how to use
  */
@@ -1035,6 +1130,7 @@ static void show_usage(void)
 		"  -l\t\tshow long (full) command information\n"
 		"  -m\t\treport memory in megabytes\n"
 		"  -o file\tdump data to json formatted file\n"
+		"  -p proclist\tspecify comma separated list of processes to monitor\n"
 		"  -q\t\trun quietly, useful for -o output only\n"
 		"  -s\t\tshow short command information\n",
 		APP_NAME, VERSION, APP_NAME);
@@ -1054,7 +1150,7 @@ int main(int argc, char **argv)
 	size_t npids;
 
 	for (;;) {
-		int c = getopt(argc, argv, "cdghklmo:qs");
+		int c = getopt(argc, argv, "cdghklmo:p:qs");
 		if (c == -1)
 			break;
 		switch (c) {
@@ -1081,6 +1177,10 @@ int main(int argc, char **argv)
 			break;
 		case 'o':
 			json_filename = optarg;
+			break;
+		case 'p':
+			if (parse_pid_list(optarg) < 0)
+				exit(EXIT_FAILURE);
 			break;
 		case 'q':
 			opt_flags |= OPT_QUIET;
@@ -1168,7 +1268,6 @@ int main(int argc, char **argv)
 			fprintf(json_file, "    \"periodic-samples\":[\n");
 		}
 
-
 		while (!stop_smemstat && (forever || count--)) {
 			struct timeval tv;
 			int ret;
@@ -1221,6 +1320,7 @@ tidy:
 	uname_cache_cleanup();
 	proc_cache_cleanup();
 	mem_cache_cleanup();
+	pid_list_cleanup();
 
 	if (json_file) {
 		fprintf(json_file, "  }\n}\n");
