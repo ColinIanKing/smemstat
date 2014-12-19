@@ -107,6 +107,71 @@ static mem_info_t *mem_info_cache = NULL;
 static pid_list_t *pids = NULL;
 
 /*
+ *  Attempt to catch a range of signals so
+ *  we can clean
+ */
+static const int signals[] = {
+	/* POSIX.1-1990 */
+#ifdef SIGHUP
+	SIGHUP,
+#endif
+#ifdef SIGINT
+	SIGINT,
+#endif
+#ifdef SIGQUIT
+	SIGQUIT,
+#endif
+#ifdef SIGILL
+	SIGILL,
+#endif
+#ifdef SIGABRT
+	SIGABRT,
+#endif
+#ifdef SIGFPE
+	SIGFPE,
+#endif
+#ifdef SIGSEGV
+	SIGSEGV,
+#endif
+#ifdef SIGTERM
+	SIGTERM,
+#endif
+#ifdef SIGUSR1
+	SIGUSR1,
+#endif
+#ifdef SIGUSR2
+	SIGUSR2,
+	/* POSIX.1-2001 */
+#endif
+#ifdef SIGBUS
+	SIGBUS,
+#endif
+#ifdef SIGXCPU
+	SIGXCPU,
+#endif
+#ifdef SIGXFSZ
+	SIGXFSZ,
+#endif
+	/* Linux various */
+#ifdef SIGIOT
+	SIGIOT,
+#endif
+#ifdef SIGSTKFLT
+	SIGSTKFLT,
+#endif
+#ifdef SIGPWR
+	SIGPWR,
+#endif
+#ifdef SIGINFO
+	SIGINFO,
+#endif
+#ifdef SIGVTALRM
+	SIGVTALRM,
+#endif
+	-1,
+};
+
+/*
  *  out_of_memory()
  *      report out of memory condition
  */
@@ -1032,10 +1097,10 @@ static int mem_dump_diff(
 }
 
 /*
- *  handle_sigint()
- *      catch SIGINT and flag a stop
+ *  handle_sig()
+ *      catch signals and flag a stop
  */
-static void handle_sigint(int dummy)
+static void handle_sig(int dummy)
 {
 	(void)dummy;    /* Stop unused parameter warning with -Wextra */
 
@@ -1245,6 +1310,9 @@ int main(int argc, char **argv)
 		mem_report_size();
 		goto tidy;
 	} else {
+		struct sigaction new_action;
+		int i;
+
 		/*
 		 *  Pre-cache, this way we reduce
 		 *  the amount of mem infos we alloc during
@@ -1265,7 +1333,19 @@ int main(int argc, char **argv)
 		}
 
 		printf("Change in memory (average per second):\n");
-		signal(SIGINT, &handle_sigint);
+
+		memset(&new_action, 0, sizeof(new_action));
+		for (i = 0; signals[i] != -1; i++) {
+			new_action.sa_handler = handle_sig;
+			sigemptyset(&new_action.sa_mask);
+			new_action.sa_flags = 0;
+	
+			if (sigaction(signals[i], &new_action, NULL) < 0) {
+				fprintf(stderr, "sigaction failed: errno=%d (%s)\n",
+					errno, strerror(errno));
+				exit(EXIT_FAILURE);
+			}
+		}
 
 		if (json_file) {
 			fprintf(json_file, "    \"periodic-samples\":[\n");
