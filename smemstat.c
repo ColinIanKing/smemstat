@@ -39,8 +39,6 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 
-#define APP_NAME		"smemstat"
-
 #define UNAME_HASH_TABLE_SIZE	(521)
 #define PROC_HASH_TABLE_SIZE 	(503)
 
@@ -100,6 +98,7 @@ typedef struct pid_list {
 
 static uname_cache_t *uname_cache[UNAME_HASH_TABLE_SIZE];
 static proc_info_t *proc_cache_hash[PROC_HASH_TABLE_SIZE];
+static const char *app_name = "smemstat";
 
 static bool stop_smemstat = false;	/* set by sighandler */
 static unsigned int opt_flags;		/* options */
@@ -1197,7 +1196,7 @@ static void show_usage(void)
 		"  -p proclist\tspecify comma separated list of processes to monitor\n"
 		"  -q\t\trun quietly, useful for -o output only\n"
 		"  -s\t\tshow short command information\n",
-		APP_NAME, VERSION, APP_NAME);
+		app_name, VERSION, app_name);
 }
 
 int main(int argc, char **argv)
@@ -1300,7 +1299,7 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Cannot open json output file '%s'.\n", json_filename);
 			exit(EXIT_FAILURE);
 		}
-		fprintf(json_file, "{\n  \"" APP_NAME "\":{\n");
+		fprintf(json_file, "{\n  \"%s\":{\n", app_name);
 	}
 
 	if (count == 0) {
