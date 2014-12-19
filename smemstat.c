@@ -91,9 +91,9 @@ typedef struct __attribute__ ((__packed__)) mem_info_t {
 } mem_info_t;
 
 typedef struct pid_list {
-	pid_t		pid;
-	char 		*name;
-	struct pid_list	*next;
+	pid_t		pid;		/* process id */
+	char 		*name;		/* process name */
+	struct pid_list	*next;		/* next in list */
 } pid_list_t;
 
 static uname_cache_t *uname_cache[UNAME_HASH_TABLE_SIZE];
