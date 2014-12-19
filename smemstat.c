@@ -206,10 +206,10 @@ static char *get_pid_comm(const pid_t pid)
 		return NULL;
 
 	if ((ret = read(fd, buffer, sizeof(buffer))) <= 0) {
-		close(fd);
+		(void)close(fd);
 		return NULL;
 	}
-	close(fd);
+	(void)close(fd);
 	buffer[ret-1] = '\0';
 
 	return strdup(buffer);
@@ -232,10 +232,10 @@ static char *get_pid_cmdline(const pid_t pid)
 		return NULL;
 
 	if ((ret = read(fd, buffer, sizeof(buffer))) <= 0) {
-		close(fd);
+		(void)close(fd);
 		return NULL;
 	}
-	close(fd);
+	(void)close(fd);
 
 	if (ret >= (ssize_t)sizeof(buffer))
 		ret = sizeof(buffer) - 1;
@@ -698,10 +698,10 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 
 	/* Can't read it, no access rights? */
 	if (errno == EACCES) {
-		fclose(fp);
+		(void)fclose(fp);
 		return 0;
 	}
-	fclose(fp);
+	(void)fclose(fp);
 
 	if ((new_m = mem_cache_alloc()) == NULL)
 		return -1;
@@ -723,14 +723,14 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 			if (sscanf(buffer + 5, "%9i", &new_m->uid) == 1) {
 				new_m->uname = uname_cache_find(new_m->uid);
 				if (new_m->uname == NULL) {
-					fclose(fp);
+					(void)fclose(fp);
 					return -1;
 				}
 				break;
 			}
 		}
 	}
-	fclose(fp);
+	(void)fclose(fp);
 
 	return 0;
 }
@@ -758,13 +758,13 @@ static int mem_get_all_pids(mem_info_t **mem, size_t *npids)
 		pid = (pid_t)strtoul(entry->d_name, NULL, 10);
 
 		if (mem_get_by_proc(pid, mem) < 0) {
-			closedir(dir);
+			(void)closedir(dir);
 			return -1;
 		}
 		(*npids)++;
 	}
 
-	closedir(dir);
+	(void)closedir(dir);
 
 	return 0;
 }
@@ -1324,7 +1324,7 @@ tidy:
 
 	if (json_file) {
 		fprintf(json_file, "  }\n}\n");
-		fclose(json_file);
+		(void)fclose(json_file);
 	}
 
 	exit(EXIT_SUCCESS);
