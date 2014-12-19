@@ -1339,7 +1339,7 @@ int main(int argc, char **argv)
 			new_action.sa_handler = handle_sig;
 			sigemptyset(&new_action.sa_mask);
 			new_action.sa_flags = 0;
-	
+
 			if (sigaction(signals[i], &new_action, NULL) < 0) {
 				fprintf(stderr, "sigaction failed: errno=%d (%s)\n",
 					errno, strerror(errno));
