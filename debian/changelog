@@ -1,3 +1,19 @@
+smemstat (0.01.11-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Add some more trivial comments
+  * Replace APP_NAME with const char string
+  * Remove whitespace
+  * Add better signal handling
+  * Use suseconds_t for nsec conversions
+  * Check for gettimeofday failures
+  * Update debian standards version
+  * Ignore returns from close(), fclose()
+  * Fix typo in comment
+  * Remove trailing fullstop from man page heading
+
+ -- Colin King <colin.king@canonical.com>  Fri, 19 Dec 2014 13:02:00 +0000
+
 smemstat (0.01.10-1) unstable; urgency=medium
 
   * Makefile: bump version
