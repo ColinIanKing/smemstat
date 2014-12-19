@@ -1110,7 +1110,6 @@ nomem:
 	out_of_memory("allocating pid list.\n");
 	pid_list_cleanup();
 	return -1;
-	
 }
 
 /*
@@ -1259,7 +1258,11 @@ int main(int argc, char **argv)
 		duration.tv_usec = (suseconds_t)(duration_secs * 1000000.0) - (duration.tv_sec * 1000000);
 		whence.tv_sec = 0;
 		whence.tv_usec = 0;
-		gettimeofday(&tv1, NULL);
+		if (gettimeofday(&tv1, NULL) < 0) {
+			fprintf(stderr, "gettimeofday failed: errno=%d (%s)\n",
+				errno, strerror(errno));
+			exit(EXIT_FAILURE);
+		}
 
 		printf("Change in memory (average per second):\n");
 		signal(SIGINT, &handle_sigint);
@@ -1272,7 +1275,11 @@ int main(int argc, char **argv)
 			struct timeval tv;
 			int ret;
 
-			gettimeofday(&tv2, NULL);
+			if (gettimeofday(&tv2, NULL) < 0) {
+				fprintf(stderr, "gettimeofday failed: errno=%d (%s)\n",
+					errno, strerror(errno));
+				exit(EXIT_FAILURE);
+			}
 
 			tv = timeval_add(&duration, &whence);
 			tv = timeval_add(&tv, &tv1);
