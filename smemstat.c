@@ -395,12 +395,12 @@ static struct timeval timeval_sub(const struct timeval *a, const struct timeval 
 	_b.tv_usec = b->tv_usec;
 
 	if (a->tv_usec < _b.tv_usec) {
-		int nsec = ((_b.tv_usec - a->tv_usec) / 1000000) + 1;
+		suseconds_t nsec = ((_b.tv_usec - a->tv_usec) / 1000000) + 1;
 		_b.tv_sec += nsec;
 		_b.tv_usec -= (1000000 * nsec);
 	}
 	if (a->tv_usec - _b.tv_usec > 1000000) {
-		int nsec = (a->tv_usec - _b.tv_usec) / 1000000;
+		suseconds_t nsec = (a->tv_usec - _b.tv_usec) / 1000000;
 		_b.tv_sec -= nsec;
 		_b.tv_usec += (1000000 * nsec);
 	}
