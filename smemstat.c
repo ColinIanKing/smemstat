@@ -87,7 +87,7 @@ typedef struct __attribute__ ((__packed__)) mem_info_t {
 	int64_t		d_swap;		/* Delta swap */
 	bool		alive;		/* true if proc is alive */
 
-	struct mem_info_t *d_next;	/* sotted deltas by total */
+	struct mem_info_t *d_next;	/* sorted deltas by total */
 	struct mem_info_t *s_next;	/* sorted by total */
 	struct mem_info_t *next;	/* for free list */
 } mem_info_t;
