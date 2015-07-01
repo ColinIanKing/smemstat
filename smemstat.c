@@ -427,61 +427,27 @@ static void proc_cache_cleanup(void)
 }
 
 /*
- *  timeval_double
+ *  timeval_to_double
  *      timeval to a double
  */
-static inline double timeval_double(const struct timeval *tv)
+static inline double timeval_to_double(const struct timeval *tv)
 {
 	return (double)tv->tv_sec + ((double)tv->tv_usec / 1000000.0);
 }
 
 /*
- *  timeval_sub()
- *	timeval a - b
+ *  double_to_timeval
+ *      seconds in double to timeval
  */
-static struct timeval timeval_sub(const struct timeval *a, const struct timeval *b)
+static inline struct timeval double_to_timeval(const double val)
 {
-	struct timeval ret, _b;
+	struct timeval tv;
 
-	_b.tv_sec = b->tv_sec;
-	_b.tv_usec = b->tv_usec;
+	tv.tv_sec = val;
+	tv.tv_usec = (val - (time_t)val) * 1000000.0;
 
-	if (a->tv_usec < _b.tv_usec) {
-		suseconds_t nsec = ((_b.tv_usec - a->tv_usec) / 1000000) + 1;
-		_b.tv_sec += nsec;
-		_b.tv_usec -= (1000000 * nsec);
-	}
-	if (a->tv_usec - _b.tv_usec > 1000000) {
-		suseconds_t nsec = (a->tv_usec - _b.tv_usec) / 1000000;
-		_b.tv_sec -= nsec;
-		_b.tv_usec += (1000000 * nsec);
-	}
-
-	ret.tv_sec = a->tv_sec - _b.tv_sec;
-	ret.tv_usec = a->tv_usec - _b.tv_usec;
-
-	return ret;
+	return tv;
 }
-
-/*
- *  timeval_add()
- *	timeval a + b
- */
-static struct timeval timeval_add(const struct timeval *a, const struct timeval *b)
-{
-	struct timeval ret;
-
-	ret.tv_sec = a->tv_sec + b->tv_sec;
-	ret.tv_usec = a->tv_usec + b->tv_usec;
-	if (ret.tv_usec > 1000000) {
-		int nsec = (ret.tv_usec / 1000000);
-		ret.tv_sec += nsec;
-		ret.tv_usec -= (1000000 * nsec);
-	}
-
-	return ret;
-}
-
 
 static inline unsigned long hash_uid(const uid_t uid)
 {
@@ -1194,8 +1160,8 @@ int main(int argc, char **argv)
 
 	char *json_filename = NULL;
 	FILE *json_file = NULL;
-	double duration_secs = 1.0;
-	struct timeval tv1, tv2, duration, whence;
+	double duration = 1.0, whence = 0.0;
+	struct timeval tv1, tv2;
 	bool forever = true;
 	long int count = 0;
 	size_t npids;
@@ -1256,12 +1222,12 @@ int main(int argc, char **argv)
 
 	if (optind < argc) {
 		errno = 0;
-		duration_secs = strtof(argv[optind++], NULL);
+		duration = strtof(argv[optind++], NULL);
 		if (errno) {
 			fprintf(stderr, "Invalid or out of range value for duration\n");
 			exit(EXIT_FAILURE);
 		}
-		if (duration_secs < 1.0) {
+		if (duration < 1.0) {
 			fprintf(stderr, "Duration must be 1.0 or more seconds.\n");
 			exit(EXIT_FAILURE);
 		}
@@ -1309,10 +1275,6 @@ int main(int argc, char **argv)
 			goto free_cache;
 		mem_cache_prealloc((npids * 5) / 4);
 
-		duration.tv_sec = (time_t)duration_secs;
-		duration.tv_usec = (suseconds_t)(duration_secs * 1000000.0) - (duration.tv_sec * 1000000);
-		whence.tv_sec = 0;
-		whence.tv_usec = 0;
 		if (gettimeofday(&tv1, NULL) < 0) {
 			fprintf(stderr, "gettimeofday failed: errno=%d (%s)\n",
 				errno, strerror(errno));
@@ -1340,6 +1302,7 @@ int main(int argc, char **argv)
 
 		while (!stop_smemstat && (forever || count--)) {
 			struct timeval tv;
+			double t;
 			int ret;
 
 			if (gettimeofday(&tv2, NULL) < 0) {
@@ -1348,21 +1311,17 @@ int main(int argc, char **argv)
 				exit(EXIT_FAILURE);
 			}
 
-			tv = timeval_add(&duration, &whence);
-			tv = timeval_add(&tv, &tv1);
-			tv2 = tv = timeval_sub(&tv, &tv2);
-
-			/* Play catch-up, probably been asleep */
-			if (tv.tv_sec < 0) {
-				tv.tv_sec = 0;
-				tv.tv_usec = 0;
-				tv2 = tv;
+			t = duration + whence + timeval_to_double(&tv1) - timeval_to_double(&tv2);
+			if (t < 0.0) {
+				/* Play catch-up, probably been asleep */
+				t = 0.0;
 			}
+			tv2 = tv = double_to_timeval(t);
 
 			ret = select(0, NULL, NULL, NULL, &tv2);
 			if (ret < 0) {
 				if (errno == EINTR) {
-					duration = timeval_sub(&tv, &tv2);
+					duration = timeval_to_double(&tv) - timeval_to_double(&tv2);
 					stop_smemstat = true;
 				} else {
 					fprintf(stderr, "Select failed: %s\n", strerror(errno));
@@ -1372,13 +1331,13 @@ int main(int argc, char **argv)
 
 			if (mem_get_all_pids(&mem_info_new, &npids) < 0)
 				goto free_cache;
-			mem_dump_diff(json_file, mem_info_old, mem_info_new, timeval_double(&duration));
+			mem_dump_diff(json_file, mem_info_old, mem_info_new, duration);
 
 			mem_cache_free_list(mem_info_old);
 			mem_info_old = mem_info_new;
 			mem_info_new = NULL;
 
-			whence = timeval_add(&duration, &whence);
+			whence += duration;
 		}
 		mem_report_size();
 
