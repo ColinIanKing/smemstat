@@ -123,9 +123,6 @@ static const int signals[] = {
 #ifdef SIGFPE
 	SIGFPE,
 #endif
-#ifdef SIGSEGV
-	SIGSEGV,
-#endif
 #ifdef SIGTERM
 	SIGTERM,
 #endif
