@@ -262,7 +262,7 @@ static char *get_pid_comm(const pid_t pid)
 		return NULL;
 	}
 	(void)close(fd);
-	buffer[ret-1] = '\0';
+	buffer[ret - 1] = '\0';
 
 	return strdup(buffer);
 }
@@ -366,7 +366,7 @@ static proc_info_t *proc_cache_add_at_hash_index(
 		return NULL;
 	}
 
-	p->pid  = pid;
+	p->pid = pid;
 	p->cmdline = get_pid_cmdline(pid);
 	if (p->cmdline == NULL)
 		p->kernel_thread = true;
