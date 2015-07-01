@@ -523,19 +523,23 @@ static void uname_cache_cleanup(void)
  *  mem_get_size()
  *	parse proc sizes in K bytes
  */
-static int mem_get_size(FILE *fp, const char *field, uint64_t *size)
+static int mem_get_size(FILE *fp, const char *field, const size_t len, uint64_t *size)
 {
-	char tmp[4096];
+	char buf[4096];
 	uint64_t size_k;
 
 	*size = 0;
 
-	while (!feof(fp)) {
-		if (fscanf(fp, "%4095[^:]: %" SCNi64 "%*[^\n]%*c", tmp, &size_k) == 2) {
-			if (strcmp(tmp, field) == 0) {
-				*size = size_k * 1024;
-				return 0;
-			}
+	/*
+	 *  scanf is expensive, so.. read a line in at a time
+	 *  and if we have a potential match then parse with
+	 *  sscanf
+	 */
+	while (fgets(buf, sizeof(buf) - 1, fp)) {
+		if (!strncmp(buf, field, len) &&
+		    sscanf(buf + len, "%" SCNi64, &size_k) == 1) {
+			*size = size_k * 1024;
+			return 0;
 		}
 	}
 	return -1;
@@ -567,15 +571,15 @@ static int mem_get_entry(FILE *fp, mem_info_t *mem)
 		}
 	}
 
-	if (mem_get_size(fp, "Rss", &rss) < 0)
+	if (mem_get_size(fp, "Rss:", 4, &rss) < 0)
 		return -1;
-	if (mem_get_size(fp, "Pss", &pss) < 0)
+	if (mem_get_size(fp, "Pss:", 4, &pss) < 0)
 		return -1;
-	if (mem_get_size(fp, "Private_Clean", &priv_clean) < 0)
+	if (mem_get_size(fp, "Private_Clean:", 14, &priv_clean) < 0)
 		return -1;
-	if (mem_get_size(fp, "Private_Dirty", &priv_dirty) < 0)
+	if (mem_get_size(fp, "Private_Dirty:", 14, &priv_dirty) < 0)
 		return -1;
-	if (mem_get_size(fp, "Swap", &swap) < 0)
+	if (mem_get_size(fp, "Swap:", 5, &swap) < 0)
 		return -1;
 
 	mem->rss += rss;
