@@ -1088,10 +1088,10 @@ static void pid_list_cleanup(void)
  */
 static int parse_pid_list(char *arg)
 {
-	char *str, *token, *saveptr = NULL;
+	char *str, *token;
 	pid_list_t *p;
 
-	for (str = arg; (token = strtok_r(str, ",", &saveptr)) != NULL; str = NULL) {
+	for (str = arg; (token = strtok(str, ",")) != NULL; str = NULL) {
 		if (isdigit(token[0])) {
 			pid_t pid;
 
