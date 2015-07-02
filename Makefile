@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 
-VERSION=0.01.12
+VERSION=0.01.13
 #
 
 CFLAGS += -Wall -Wextra -DVERSION='"$(VERSION)"' -O2
@@ -27,7 +27,7 @@ MANDIR=/usr/share/man/man8
 OBJS = smemstat.o 
 
 smemstat: $(OBJS) Makefile
-	$(CC) $(CFLAGS) $(OBJS) -o $@ $(LDFLAGS) -g
+	$(CC) $(CFLAGS) $(OBJS) -o $@ $(LDFLAGS)
 
 smemstat.8.gz: smemstat.8
 	gzip -c $< > $@
