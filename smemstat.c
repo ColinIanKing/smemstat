@@ -168,6 +168,16 @@ static void out_of_memory(const char *msg)
 }
 
 /*
+ *  uname_name()
+ *	fetch name from uname, handle
+ *	unknown NULL unames too
+ */
+static inline const char *uname_name(uname_cache_t *uname)
+{
+	return uname ? uname->name : "<unknown>";
+}
+
+/*
  *  count_bits()
  *	count bits set, from C Programming Language 2nd Ed
  */
@@ -740,6 +750,13 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 	if ((fp = fopen(path, "r")) == NULL)
 		return 0;
 
+	/*
+	 *  Find Uid and uname. Note that it may
+	 *  not be found, in which case new->uname is
+	 *  still NULL, so we need to always use
+	 *  uname_name() to fetch the uname to handle
+	 *  the NULL uname cases.
+	 */
 	while (fgets(buffer, sizeof(buffer), fp) != NULL) {
 		if (!strncmp(buffer, "Uid:", 4)) {
 			if (sscanf(buffer + 5, "%9i", &new_m->uid) == 1) {
@@ -870,12 +887,14 @@ static int mem_dump(FILE *json, mem_info_t *mem_info)
 
 		if (!(opt_flags & OPT_QUIET))
 			printf(" %5d %9s %9s %9s %9s %-10.10s %s\n",
-				m->pid, s_swap, s_uss, s_pss, s_rss, m->uname->name, cmd);
+				m->pid, s_swap, s_uss, s_pss, s_rss,
+				uname_name(m->uname), cmd);
 
 		if (json) {
 			fprintf(json, "      {\n");
 			fprintf(json, "        \"pid\":%d,\n", m->pid);
-			fprintf(json, "        \"user\":\"%s\",\n", m->uname->name);
+			fprintf(json, "        \"user\":\"%s\",\n",
+				uname_name(m->uname));
 			fprintf(json, "        \"command\":\"%s\",\n", cmd);
 			fprintf(json, "        \"swap\":%" PRIi64 ",\n", m->swap);
 			fprintf(json, "        \"uss\":%" PRIi64 ",\n", m->uss);
@@ -1006,13 +1025,15 @@ static int mem_dump_diff(
 
 		if (!(opt_flags & OPT_QUIET))
 			printf(" %5d %9s %9s %9s %9s %-10.10s %s\n",
-				m->pid, s_swap, s_uss, s_pss, s_rss, m->uname->name, cmd);
+				m->pid, s_swap, s_uss, s_pss, s_rss,
+				uname_name(m->uname), cmd);
 
 		if (json) {
 			fprintf(json, "          {\n");
 			fprintf(json, "            \"pid\":%d,\n", m->pid);
 			fprintf(json, "            \"command\":\"%s\",\n", cmd);
-			fprintf(json, "            \"user\":\"%s\",\n", m->uname->name);
+			fprintf(json, "            \"user\":\"%s\",\n",
+				uname_name(m->uname));
 			fprintf(json, "            \"swap\":%" PRIi64 ",\n", m->swap);
 			fprintf(json, "            \"uss\":%" PRIi64 ",\n", m->uss);
 			fprintf(json, "            \"pss\":%" PRIi64 ",\n", m->pss);
