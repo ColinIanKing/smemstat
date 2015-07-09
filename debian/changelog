@@ -1,3 +1,10 @@
+smemstat (0.01.14-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Fix null ptr dereference when UID can't be read (LP: #1473245)
+
+ -- Colin King <colin.king@canonical.com>  Fri, 10 Jul 2015 00:37:10 +0100
+
 smemstat (0.01.13-1) unstable; urgency=medium
 
   * Makefile: bump version
