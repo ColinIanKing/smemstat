@@ -1,3 +1,13 @@
+smemstat (0.01.15-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Debian/control: update Build-Depends for debhelper
+  * Debian/compat: update to 9
+  * Debian/control: update Standards-Version to 3.9.8
+  * Update and correct copyright years
+
+ -- Colin King <colin.king@canonical.com>  Tue, 4 Oct 2016 10:45:11 +0100
+
 smemstat (0.01.14-1) unstable; urgency=medium
 
   * Makefile: bump version
