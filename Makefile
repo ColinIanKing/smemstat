@@ -21,6 +21,16 @@ VERSION=0.01.15
 
 CFLAGS += -Wall -Wextra -DVERSION='"$(VERSION)"' -O2
 
+#
+# Pedantic flags
+#
+ifeq ($(PEDANTIC),1)
+CFLAGS += -Wabi -Wcast-qual -Wfloat-equal -Wmissing-declarations \
+	-Wmissing-format-attribute -Wno-long-long -Wpacked \
+	-Wredundant-decls -Wshadow -Wno-missing-field-initializers \
+	-Wno-missing-braces -Wno-sign-compare -Wno-multichar
+endif
+
 BINDIR=/usr/bin
 MANDIR=/usr/share/man/man8
 
