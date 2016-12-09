@@ -38,6 +38,9 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <ncurses.h>
+#include <math.h>
 
 #define UNAME_HASH_TABLE_SIZE	(521)
 #define PROC_HASH_TABLE_SIZE 	(503)
@@ -52,6 +55,8 @@
 #define OPT_MEM_IN_MBYTES	(0x00000040)
 #define OPT_MEM_IN_GBYTES	(0x00000080)
 #define OPT_MEM_ALL		(OPT_MEM_IN_KBYTES | OPT_MEM_IN_MBYTES | OPT_MEM_IN_GBYTES)
+#define OPT_TOP			(0x00000100)
+#define OPT_TOP_TOTAL		(0x00000200)
 
 /* process specific information */
 typedef struct __attribute__ ((__packed__)) proc_info {
@@ -96,6 +101,16 @@ typedef struct pid_list {
 	struct pid_list	*next;		/* next in list */
 } pid_list_t;
 
+typedef struct {
+	void (*df_setup)(void);
+	void (*df_endwin)(void);
+	void (*df_clear)(void);
+	void (*df_refresh)(void);
+	void (*df_winsize)(bool redo);
+	void (*df_printf)(char *str, ...);
+	void (*df_linebreak)(void);
+} display_funcs_t;
+
 static uname_cache_t *uname_cache[UNAME_HASH_TABLE_SIZE];
 static proc_info_t *proc_cache_hash[PROC_HASH_TABLE_SIZE];
 static const char *app_name = "smemstat";
@@ -104,6 +119,11 @@ static bool stop_smemstat = false;	/* set by sighandler */
 static unsigned int opt_flags;		/* options */
 static mem_info_t *mem_info_cache = NULL;
 static pid_list_t *pids = NULL;
+static display_funcs_t df;
+static bool resized;
+static int rows = 25;
+static int cols = 80;
+static int cury = 0;
 
 /*
  *  Attempt to catch a range of signals so
@@ -159,11 +179,186 @@ static const int signals[] = {
 };
 
 /*
+ *  handle_sigwinch()
+ *      flag window resize on SIGWINCH
+ */
+static void handle_sigwinch(int sig)
+{
+	(void)sig;
+
+	resized = true;
+}
+
+/*
+ *  smemstat_noop()
+ *	no-operation display handler
+ */
+static void smemstat_noop(void)
+{
+}
+
+/*
+ *  smemstat_top_setup()
+ *	setup display for ncurses top mode
+ */
+static void smemstat_top_setup(void)
+{
+	initscr();
+	cbreak();
+	noecho();
+	nodelay(stdscr, 1);
+	keypad(stdscr, 1);
+	curs_set(0);
+}
+
+/*
+ *  smemstat_top_endwin()
+ *	end display for ncurses top mode
+ */
+static void smemstat_top_endwin(void)
+{
+	df.df_winsize(true);
+	resizeterm(rows, cols);
+	refresh();
+	resized = false;
+	clear();
+	endwin();
+}
+
+/*
+ *  smemstat_top_clear()
+ *	clear display for ncurses top mode
+ */
+static void smemstat_top_clear(void)
+{
+	clear();
+}
+
+/*
+ *  smemstat_top_refresh()
+ *	refresh display for ncurses top mode
+ */
+static void smemstat_top_refresh(void)
+{
+	refresh();
+}
+
+/*
+ *  smemstat_generic_winsize()
+ *	get tty size in all modes
+ */
+static void smemstat_generic_winsize(bool redo)
+{
+	if (redo) {
+		struct winsize ws;
+
+		if ((ioctl(fileno(stdin), TIOCGWINSZ, &ws) != -1)) {
+			rows = ws.ws_row;
+			cols = ws.ws_col;
+		} else {
+			rows = 25;
+			cols = 80;
+		}
+	}
+}
+
+/*
+ *  smemstat_top_winsize()
+ *	get tty size in top mode
+ */
+static void smemstat_top_winsize(bool redo)
+{
+	(void)redo;
+
+	smemstat_generic_winsize(true);
+	resizeterm(rows, cols);
+}
+
+/*
+ *  smemstat_top_printf
+ *	print text to display width in top mode
+ */
+static void smemstat_top_printf(char *fmt, ...)
+{
+	va_list ap;
+	char buf[256];
+	int sz = sizeof(buf) - 1;
+
+	if (cury >= rows)
+		return;
+
+	if (cols < sz)
+		sz = cols;
+
+	va_start(ap, fmt);
+	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
+	buf[sz] = '\0';
+	mvprintw(cury, 0, buf);
+	va_end(ap);
+	cury++;
+}
+
+/*
+ *  smemstat_normal_printf
+ *	normal tty printf
+ */
+static void smemstat_normal_printf(char *fmt, ...)
+{
+	va_list ap;
+	char buf[256];
+
+	va_start(ap, fmt);
+	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
+	fputs(buf, stdout);
+	va_end(ap);
+}
+
+/*
+ *  smemstat_normal_linebreak
+ *	normal tty print a new line
+ */
+static void smemstat_normal_linebreak(void)
+{
+	putchar('\n');
+}
+
+static display_funcs_t df_top = {
+	smemstat_top_setup,
+	smemstat_top_endwin,
+	smemstat_top_clear,
+	smemstat_top_refresh,
+	smemstat_top_winsize,
+	smemstat_top_printf,
+	smemstat_noop,
+};
+
+static display_funcs_t df_normal = {
+	smemstat_noop,
+	smemstat_noop,
+	smemstat_noop,
+	smemstat_noop,
+	smemstat_generic_winsize,
+	smemstat_normal_printf,
+	smemstat_normal_linebreak,
+};
+
+/*
+ *  display_restore()
+ *	restore display back to normal tty
+ */
+static void display_restore(void)
+{
+	df.df_endwin();
+	df = df_normal;
+}
+
+/*
  *  out_of_memory()
  *      report out of memory condition
  */
 static void out_of_memory(const char *msg)
 {
+	display_restore();
 	fprintf(stderr, "Out of memory: %s.\n", msg);
 }
 
@@ -449,14 +644,29 @@ static inline double timeval_to_double(const struct timeval *tv)
  *  double_to_timeval
  *      seconds in double to timeval
  */
-static inline struct timeval double_to_timeval(const double val)
+static inline void double_to_timeval(
+	const double val,
+	struct timeval *tv)
+{
+	tv->tv_sec = val;
+	tv->tv_usec = (val - (time_t)val) * 1000000.0;
+}
+
+/*
+ *  gettime_to_double()
+ *      get time as a double
+ */
+static double gettime_to_double(void)
 {
 	struct timeval tv;
 
-	tv.tv_sec = val;
-	tv.tv_usec = (val - (time_t)val) * 1000000.0;
-
-	return tv;
+	if (gettimeofday(&tv, NULL) < 0) {
+		display_restore();
+		fprintf(stderr, "gettimeofday failed: errno=%d (%s)\n",
+			errno, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	return timeval_to_double(&tv);
 }
 
 static inline unsigned long hash_uid(const uid_t uid)
@@ -785,6 +995,7 @@ static int mem_get_all_pids(mem_info_t **mem, size_t *npids)
 	*npids = 0;
 
 	if ((dir = opendir("/proc")) == NULL) {
+		display_restore();
 		fprintf(stderr, "Cannot read directory /proc\n");
 		return -1;
 	}
@@ -876,7 +1087,7 @@ static int mem_dump(FILE *json, mem_info_t *mem_info)
 	}
 
 	if (!(opt_flags & OPT_QUIET))
-		printf("  PID       Swap       USS       PSS       RSS User       Command\n");
+		df.df_printf("  PID       Swap       USS       PSS       RSS User       Command\n");
 
 	for (m = sorted; m; m = m->s_next) {
 		const char *cmd = mem_cmdline(m);
@@ -886,7 +1097,7 @@ static int mem_dump(FILE *json, mem_info_t *mem_info)
 		mem_to_str((double)m->rss, s_rss, sizeof(s_rss));
 
 		if (!(opt_flags & OPT_QUIET))
-			printf(" %5d %9s %9s %9s %9s %-10.10s %s\n",
+			df.df_printf(" %5d %9s %9s %9s %9s %-10.10s %s\n",
 				m->pid, s_swap, s_uss, s_pss, s_rss,
 				uname_name(m->uname), cmd);
 
@@ -911,7 +1122,7 @@ static int mem_dump(FILE *json, mem_info_t *mem_info)
 	mem_to_str((double)t_rss, s_rss, sizeof(s_rss));
 
 	if (!(opt_flags & OPT_QUIET))
-		printf("Total: %9s %9s %9s %9s\n\n", s_swap, s_uss, s_pss, s_rss);
+		df.df_printf("Total: %9s %9s %9s %9s\n\n", s_swap, s_uss, s_pss, s_rss);
 
 	if (json) {
 		fprintf(json, "    ],\n");
@@ -1013,7 +1224,7 @@ static int mem_dump_diff(
 	}
 
 	if (!(opt_flags & OPT_QUIET))
-		printf("  PID       Swap       USS       PSS       RSS User       Command\n");
+		df.df_printf("  PID       Swap       USS       PSS       RSS User       Command\n");
 	for (m = sorted_deltas; m; ) {
 		const char *cmd = mem_cmdline(m);
 		mem_info_t *next = m->d_next;
@@ -1024,7 +1235,7 @@ static int mem_dump_diff(
 		mem_to_str((double)m->d_rss / duration, s_rss, sizeof(s_rss));
 
 		if (!(opt_flags & OPT_QUIET))
-			printf(" %5d %9s %9s %9s %9s %-10.10s %s\n",
+			df.df_printf(" %5d %9s %9s %9s %9s %-10.10s %s\n",
 				m->pid, s_swap, s_uss, s_pss, s_rss,
 				uname_name(m->uname), cmd);
 
@@ -1053,8 +1264,9 @@ static int mem_dump_diff(
 	mem_to_str((double)t_d_uss / duration, s_uss, sizeof(s_uss));
 	mem_to_str((double)t_d_pss / duration, s_pss, sizeof(s_pss));
 	mem_to_str((double)t_d_rss / duration, s_rss, sizeof(s_rss));
+
 	if (!(opt_flags & OPT_QUIET))
-		printf("Total: %9s %9s %9s %9s\n\n", s_swap, s_uss, s_pss, s_rss);
+		df.df_printf("Total: %9s %9s %9s %9s\n\n", s_swap, s_uss, s_pss, s_rss);
 
 	if (json) {
 		fprintf(json, "        ],\n");
@@ -1174,7 +1386,9 @@ static void show_usage(void)
 		"  -o file\tdump data to json formatted file\n"
 		"  -p proclist\tspecify comma separated list of processes to monitor\n"
 		"  -q\t\trun quietly, useful for -o output only\n"
-		"  -s\t\tshow short command information\n",
+		"  -s\t\tshow short command information\n"
+		"  -t\t\ttop mode, show only changes in memory\n"
+		"  -T\t\ttop mode, show top memory hoggers\n",
 		app_name, VERSION, app_name);
 }
 
@@ -1185,14 +1399,16 @@ int main(int argc, char **argv)
 
 	char *json_filename = NULL;
 	FILE *json_file = NULL;
-	double duration = 1.0, whence = 0.0;
-	struct timeval tv1, tv2;
+	double duration = 1.0;
+	struct timeval tv1;
 	bool forever = true;
 	long int count = 0;
 	size_t npids;
 
+	df = df_normal;
+
 	for (;;) {
-		int c = getopt(argc, argv, "cdghklmo:p:qs");
+		int c = getopt(argc, argv, "cCdghklmo:p:qstT");
 		if (c == -1)
 			break;
 		switch (c) {
@@ -1229,6 +1445,13 @@ int main(int argc, char **argv)
 			break;
 		case 's':
 			opt_flags |= OPT_CMD_SHORT;
+			break;
+		case 'T':
+			opt_flags |= OPT_TOP_TOTAL;
+			/* fall through */
+		case 't':
+			opt_flags |= OPT_TOP;
+			count = -1;
 			break;
 		default:
 			show_usage();
@@ -1289,8 +1512,12 @@ int main(int argc, char **argv)
 		goto tidy;
 	} else {
 		struct sigaction new_action;
+		uint64_t t = 1;
 		int i;
+		bool redo = false;
+		double duration_secs = (double)duration, time_start, time_now;
 
+		df = df_top;
 		/*
 		 *  Pre-cache, this way we reduce
 		 *  the amount of mem infos we alloc during
@@ -1306,7 +1533,8 @@ int main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 
-		printf("Change in memory (average per second):\n");
+		if (!(opt_flags & OPT_TOP))
+			printf("Change in memory (average per second):\n");
 
 		memset(&new_action, 0, sizeof(new_action));
 		for (i = 0; signals[i] != -1; i++) {
@@ -1320,49 +1548,82 @@ int main(int argc, char **argv)
 				exit(EXIT_FAILURE);
 			}
 		}
+		memset(&new_action, 0, sizeof(new_action));
+		new_action.sa_handler = handle_sigwinch;
+		if (sigaction(SIGWINCH, &new_action , NULL) < 0) {
+			fprintf(stderr, "sigaction failed: errno=%d (%s)\n",
+				errno, strerror(errno));
+			exit(EXIT_FAILURE);
+		}
 
 		if (json_file) {
 			fprintf(json_file, "    \"periodic-samples\":[\n");
 		}
 
+		time_now = time_start = gettime_to_double();
+
+		df.df_setup();
+		df.df_winsize(true);
+
 		while (!stop_smemstat && (forever || count--)) {
 			struct timeval tv;
-			double t;
-			int ret;
+			double secs;
 
-			if (gettimeofday(&tv2, NULL) < 0) {
-				fprintf(stderr, "gettimeofday failed: errno=%d (%s)\n",
-					errno, strerror(errno));
-				exit(EXIT_FAILURE);
+			df.df_clear();
+			cury = 0;
+
+			/* Timeout to wait for in the future for this sample */
+			secs = time_start + ((double)t * duration_secs) - time_now;
+			/* Play catch-up, probably been asleep */
+			if (secs < 0.0) {
+				t = ceil((time_now - time_start) / duration_secs);
+				secs = time_start +
+					((double)t * duration_secs) - time_now;
+				/* We don't get sane stats if duration is too small */
+				if (secs < 0.5)
+					secs += duration_secs;
+			} else {
+				if (!redo)
+					t++;
 			}
+			redo = false;
 
-			t = duration + whence + timeval_to_double(&tv1) - timeval_to_double(&tv2);
-			if (t < 0.0) {
-				/* Play catch-up, probably been asleep */
-				t = 0.0;
-			}
-			tv2 = tv = double_to_timeval(t);
+			double_to_timeval(secs, &tv);
 
-			ret = select(0, NULL, NULL, NULL, &tv2);
-			if (ret < 0) {
+retry:
+			if (select(0, NULL, NULL, NULL, &tv) < 0) {
 				if (errno == EINTR) {
-					duration = timeval_to_double(&tv) - timeval_to_double(&tv2);
-					stop_smemstat = true;
+					if (!resized) {
+						stop_smemstat = true;
+					} else {
+						redo = true;
+						df.df_winsize(true);
+						if (timeval_to_double(&tv) > 0.0)
+							goto retry;
+					}
 				} else {
+					display_restore();
 					fprintf(stderr, "Select failed: %s\n", strerror(errno));
 					break;
 				}
 			}
 
+
 			if (mem_get_all_pids(&mem_info_new, &npids) < 0)
 				goto free_cache;
-			mem_dump_diff(json_file, mem_info_old, mem_info_new, duration);
+
+			if (opt_flags & OPT_TOP_TOTAL) {
+				mem_dump(json_file, mem_info_new);
+			} else {
+				mem_dump_diff(json_file, mem_info_old, mem_info_new, duration);
+			}
+			df.df_refresh();
+			df.df_linebreak();
 
 			mem_cache_free_list(mem_info_old);
 			mem_info_old = mem_info_new;
 			mem_info_new = NULL;
-
-			whence += duration;
+			time_now = gettime_to_double();
 		}
 		mem_report_size();
 
@@ -1375,6 +1636,8 @@ free_cache:
 	}
 
 tidy:
+	display_restore();
+
 	uname_cache_cleanup();
 	proc_cache_cleanup();
 	mem_cache_cleanup();
