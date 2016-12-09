@@ -1,3 +1,18 @@
+smemstat (0.01.16-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Add some more trivial comments
+  * Remove unnecessary static NULL assignments
+  * Add gnu printf attributes
+  * Clean up code
+  * Remove need for linebreak display function
+  * Debain/control: add libncurses5-dev
+  * Update manual
+  * Add ncurses -t and -T top modes
+  * Makefile: add PEDANTIC flags
+
+ -- Colin King <colin.king@canonical.com>  Fri, 9 Dec 2016 09:40:20 +0000
+
 smemstat (0.01.15-1) unstable; urgency=medium
 
   * Makefile: bump version
