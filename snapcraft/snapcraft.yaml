@@ -1,0 +1,20 @@
+name: smemstat
+version: 0.01.16-20161209-95-b46ae3a
+summary: memory usage monitoring tool
+description: smemstat reports the physical memory usage taking into consideration shared memory.  The tool can either report a current snapshot of memory usage or periodically dump out any changes in memory.
+confinement: devmode
+
+plugs:
+     system-observe: null
+
+parts:
+    smemstat:
+        plugin: make
+        source: git://kernel.ubuntu.com/cking/smemstat
+        build-packages:
+            - gcc
+            - make
+apps:
+    smemstat:
+        command: usr/bin/smemstat
+
