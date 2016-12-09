@@ -362,9 +362,20 @@ static inline const char *uname_name(uname_cache_t *uname)
 
 /*
  *  count_bits()
- *	count bits set, from C Programming Language 2nd Ed
  */
-static unsigned int count_bits(const unsigned int val)
+#if defined(__GNUC__)
+/*
+ *  use GCC built-in
+ */
+static inline unsigned int count_bits(const unsigned int val)
+{
+	return __builtin_popcount(val);
+}
+#else
+/*
+ *  count bits set, from C Programming Language 2nd Ed
+ */
+static inline unsigned int OPTIMIZE3 HOT count_bits(const unsigned int val)
 {
 	register unsigned int c, n = val;
 
@@ -373,6 +384,7 @@ static unsigned int count_bits(const unsigned int val)
 
 	return c;
 }
+#endif
 
 /*
  *  mem_to_str()
@@ -1493,11 +1505,10 @@ int main(int argc, char **argv)
 	}
 
 	if (count == 0) {
-		if (mem_get_all_pids(&mem_info_new, &npids) < 0)
-			goto tidy;
-		mem_dump(json_file, mem_info_new);
-		mem_report_size();
-		goto tidy;
+		if (mem_get_all_pids(&mem_info_new, &npids) == 0) {
+			mem_dump(json_file, mem_info_new);
+			mem_report_size();
+		}
 	} else {
 		struct sigaction new_action;
 		uint64_t t = 1;
@@ -1578,7 +1589,6 @@ int main(int argc, char **argv)
 			redo = false;
 
 			double_to_timeval(secs, &tv);
-
 retry:
 			if (select(0, NULL, NULL, NULL, &tv) < 0) {
 				if (errno == EINTR) {
@@ -1623,9 +1633,7 @@ free_cache:
 		mem_cache_free_list(mem_info_old);
 	}
 
-tidy:
 	display_restore();
-
 	uname_cache_cleanup();
 	proc_cache_cleanup();
 	mem_cache_cleanup();
