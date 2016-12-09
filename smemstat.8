@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH SMEMSTAT 8 "May 18, 2015"
+.TH SMEMSTAT 8 "Dec 9, 2016"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -81,10 +81,17 @@ run quietly, only really makes sense with \-o option
 .B \-s
 show short command information
 .TP
+.B \-t
+top mode, show top changes of memory
+.TP
+.B \-T
+top mode, show top consumers of memory
 .SH SEE ALSO
-.BR vmstat (8),
+.BR cpustat (8),
 .BR eventstat (8),
-.BR forkstat (8)
+.BR forkstat (8),
+.BR top (1),
+.BR vmstat (8)
 .SH AUTHOR
 smemstat was written by Colin King <colin.king@canonical.com>
 .PP
