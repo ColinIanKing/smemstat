@@ -108,7 +108,6 @@ typedef struct {
 	void (*df_refresh)(void);
 	void (*df_winsize)(bool redo);
 	void (*df_printf)(char *str, ...);
-	void (*df_linebreak)(void);
 } display_funcs_t;
 
 static uname_cache_t *uname_cache[UNAME_HASH_TABLE_SIZE];
@@ -313,15 +312,6 @@ static void smemstat_normal_printf(char *fmt, ...)
 	va_end(ap);
 }
 
-/*
- *  smemstat_normal_linebreak
- *	normal tty print a new line
- */
-static void smemstat_normal_linebreak(void)
-{
-	putchar('\n');
-}
-
 static display_funcs_t df_top = {
 	smemstat_top_setup,
 	smemstat_top_endwin,
@@ -329,7 +319,6 @@ static display_funcs_t df_top = {
 	smemstat_top_refresh,
 	smemstat_top_winsize,
 	smemstat_top_printf,
-	smemstat_noop,
 };
 
 static display_funcs_t df_normal = {
@@ -339,7 +328,6 @@ static display_funcs_t df_normal = {
 	smemstat_noop,
 	smemstat_generic_winsize,
 	smemstat_normal_printf,
-	smemstat_normal_linebreak,
 };
 
 /*
@@ -1517,7 +1505,8 @@ int main(int argc, char **argv)
 		bool redo = false;
 		double duration_secs = (double)duration, time_start, time_now;
 
-		df = df_top;
+		if (opt_flags & OPT_TOP)
+			df = df_top;
 		/*
 		 *  Pre-cache, this way we reduce
 		 *  the amount of mem infos we alloc during
@@ -1618,7 +1607,6 @@ retry:
 				mem_dump_diff(json_file, mem_info_old, mem_info_new, duration);
 			}
 			df.df_refresh();
-			df.df_linebreak();
 
 			mem_cache_free_list(mem_info_old);
 			mem_info_old = mem_info_new;
