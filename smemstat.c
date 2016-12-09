@@ -116,8 +116,8 @@ static const char *app_name = "smemstat";
 
 static bool stop_smemstat = false;	/* set by sighandler */
 static unsigned int opt_flags;		/* options */
-static mem_info_t *mem_info_cache = NULL;
-static pid_list_t *pids = NULL;
+static mem_info_t *mem_info_cache;
+static pid_list_t *pids;
 static display_funcs_t df;
 static bool resized;
 static int rows = 25;
