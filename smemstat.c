@@ -107,7 +107,7 @@ typedef struct {
 	void (*df_clear)(void);
 	void (*df_refresh)(void);
 	void (*df_winsize)(bool redo);
-	void (*df_printf)(char *str, ...);
+	void (*df_printf)(char *str, ...) __attribute__((format(printf, 1, 2)));
 } display_funcs_t;
 
 static uname_cache_t *uname_cache[UNAME_HASH_TABLE_SIZE];
@@ -123,6 +123,12 @@ static bool resized;
 static int rows = 25;
 static int cols = 80;
 static int cury = 0;
+
+static void smemstat_top_printf(char *fmt, ...) \
+	__attribute__((format(printf, 1, 2)));
+
+static void smemstat_normal_printf(char *fmt, ...) \
+	__attribute__((format(printf, 1, 2)));
 
 /*
  *  Attempt to catch a range of signals so
