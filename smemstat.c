@@ -102,11 +102,11 @@ typedef struct pid_list {
 } pid_list_t;
 
 typedef struct {
-	void (*df_setup)(void);
-	void (*df_endwin)(void);
-	void (*df_clear)(void);
-	void (*df_refresh)(void);
-	void (*df_winsize)(bool redo);
+	void (*df_setup)(void);		/* display setup */
+	void (*df_endwin)(void);	/* display end */
+	void (*df_clear)(void);		/* display clear */
+	void (*df_refresh)(void);	/* display refresh */
+	void (*df_winsize)(bool redo);	/* display get size */
 	void (*df_printf)(char *str, ...) __attribute__((format(printf, 1, 2)));
 } display_funcs_t;
 
@@ -116,13 +116,13 @@ static const char *app_name = "smemstat";
 
 static bool stop_smemstat = false;	/* set by sighandler */
 static unsigned int opt_flags;		/* options */
-static mem_info_t *mem_info_cache;
-static pid_list_t *pids;
-static display_funcs_t df;
-static bool resized;
-static int rows = 25;
-static int cols = 80;
-static int cury = 0;
+static mem_info_t *mem_info_cache;	/* cache of mem infos */
+static pid_list_t *pids;		/* PIDs to check against */
+static display_funcs_t df;		/* display functions */
+static bool resized;			/* true when SIGWINCH occurs */
+static int rows = 25;			/* display rows */
+static int cols = 80;			/* display columns */
+static int cury = 0;			/* current display y position */
 
 static void smemstat_top_printf(char *fmt, ...) \
 	__attribute__((format(printf, 1, 2)));
@@ -318,6 +318,7 @@ static void smemstat_normal_printf(char *fmt, ...)
 	va_end(ap);
 }
 
+/* ncurses based "top" mode display functions */
 static display_funcs_t df_top = {
 	smemstat_top_setup,
 	smemstat_top_endwin,
@@ -327,6 +328,7 @@ static display_funcs_t df_top = {
 	smemstat_top_printf,
 };
 
+/* normal tty mode display functions */
 static display_funcs_t df_normal = {
 	smemstat_noop,
 	smemstat_noop,
