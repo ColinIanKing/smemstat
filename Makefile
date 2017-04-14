@@ -45,7 +45,8 @@ smemstat.8.gz: smemstat.8
 dist:
 	rm -rf smemstat-$(VERSION)
 	mkdir smemstat-$(VERSION)
-	cp -rp Makefile smemstat.c smemstat.8 COPYING README scripts smemstat-$(VERSION)
+	cp -rp Makefile smemstat.c smemstat.8 COPYING README scripts \
+		snapcraft smemstat-$(VERSION)
 	tar -zcf smemstat-$(VERSION).tar.gz smemstat-$(VERSION)
 	rm -rf smemstat-$(VERSION)
 
