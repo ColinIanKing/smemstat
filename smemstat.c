@@ -184,6 +184,42 @@ static const int signals[] = {
 };
 
 /*
+ *  pid_max_digits()
+ *	determine (or guess) maximum digits of pids
+ */
+static int pid_max_digits(void)
+{
+	static int max_digits;
+	ssize_t n;
+	int fd;
+	const int default_digits = 6;
+	const int min_digits = 5;
+	char buf[32];
+
+	if (max_digits)
+		goto ret;
+
+	max_digits = default_digits;
+	fd = open("/proc/sys/kernel/pid_max", O_RDONLY);
+	if (fd < 0)
+		goto ret;
+	n = read(fd, buf, sizeof(buf) - 1);
+	(void)close(fd);
+	if (n < 0)
+		goto ret;
+
+	buf[n] = '\0';
+	max_digits = 0;
+	while (buf[max_digits] >= '0' && buf[max_digits] <= '9')
+		max_digits++;
+	if (max_digits < min_digits)
+		max_digits = min_digits;
+ret:
+	return max_digits;
+
+}
+
+/*
  *  handle_sigwinch()
  *      flag window resize on SIGWINCH
  */
@@ -1074,6 +1110,7 @@ static int mem_dump(FILE *json, mem_info_t *mem_info)
 	mem_info_t *sorted = NULL;
 	int64_t	t_swap = 0, t_uss = 0, t_pss = 0, t_rss = 0;
 	char s_swap[12], s_uss[12], s_pss[12], s_rss[12];
+	const int pid_size = pid_max_digits();
 
 	for (m = mem_info; m; m = m->next) {
 		for (l = &sorted; *l; l = &(*l)->s_next) {
@@ -1095,7 +1132,8 @@ static int mem_dump(FILE *json, mem_info_t *mem_info)
 	}
 
 	if (!(opt_flags & OPT_QUIET))
-		df.df_printf("  PID       Swap       USS       PSS       RSS User       Command\n");
+		df.df_printf(" %*.*s      Swap       USS       PSS       RSS User       Command\n",
+			pid_size, pid_size, "PID");
 
 	for (m = sorted; m; m = m->s_next) {
 		const char *cmd = mem_cmdline(m);
@@ -1105,8 +1143,8 @@ static int mem_dump(FILE *json, mem_info_t *mem_info)
 		mem_to_str((double)m->rss, s_rss, sizeof(s_rss));
 
 		if (!(opt_flags & OPT_QUIET))
-			df.df_printf(" %5d %9s %9s %9s %9s %-10.10s %s\n",
-				m->pid, s_swap, s_uss, s_pss, s_rss,
+			df.df_printf(" %*d %9s %9s %9s %9s %-10.10s %s\n",
+				pid_size, m->pid, s_swap, s_uss, s_pss, s_rss,
 				uname_name(m->uname), cmd);
 
 		if (json) {
@@ -1160,6 +1198,7 @@ static int mem_dump_diff(
 	int64_t	t_swap = 0, t_uss = 0, t_pss = 0, t_rss = 0;
 	int64_t	t_d_swap = 0, t_d_uss = 0, t_d_pss = 0, t_d_rss = 0;
 	char s_swap[12], s_uss[12], s_pss[12], s_rss[12];
+	const int pid_size = pid_max_digits();
 
 	for (m = mem_info_new; m; m = m->next) {
 		mem_delta(m, mem_info_old);
@@ -1232,7 +1271,8 @@ static int mem_dump_diff(
 	}
 
 	if (!(opt_flags & OPT_QUIET))
-		df.df_printf("  PID       Swap       USS       PSS       RSS User       Command\n");
+		df.df_printf(" %*.*s      Swap       USS       PSS       RSS User       Command\n",
+			pid_size, pid_size, "PID");
 	for (m = sorted_deltas; m; ) {
 		const char *cmd = mem_cmdline(m);
 		mem_info_t *next = m->d_next;
@@ -1243,8 +1283,8 @@ static int mem_dump_diff(
 		mem_to_str((double)m->d_rss / duration, s_rss, sizeof(s_rss));
 
 		if (!(opt_flags & OPT_QUIET))
-			df.df_printf(" %5d %9s %9s %9s %9s %-10.10s %s\n",
-				m->pid, s_swap, s_uss, s_pss, s_rss,
+			df.df_printf(" %*d %9s %9s %9s %9s %-10.10s %s\n",
+				pid_size, m->pid, s_swap, s_uss, s_pss, s_rss,
 				uname_name(m->uname), cmd);
 
 		if (json) {
