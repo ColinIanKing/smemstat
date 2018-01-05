@@ -1,3 +1,15 @@
+smemstat (0.01.18-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * debian/rules: remove whitespace at end of line
+  * Bump copyright year to 2018
+  * debian/control: update Standards-Version to 4.1.2
+  * Remove packed attribute from various structs
+  * snapcraft: add default app and stable keys
+  * snapcraft: Makefile: remove icon hack
+
+ -- Colin King <colin.king@canonical.com>  Fri, 5 Jan 2018 00:21:01 +0000
+
 smemstat (0.01.17-1) unstable; urgency=medium
 
   * Makefile: bump version
@@ -168,6 +180,6 @@ smemstat (0.01.01) trusty; urgency=low
 
 smemstat (0.01.00) trusty; urgency=low
 
-  * Initial version 
+  * Initial version
 
  -- Colin King <colin.king@canonical.com>  Mon, 14 Apr 2014 21:37:00 +0100
