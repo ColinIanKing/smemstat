@@ -59,7 +59,7 @@
 #define OPT_TOP_TOTAL		(0x00000200)
 
 /* process specific information */
-typedef struct __attribute__ ((__packed__)) proc_info {
+typedef struct proc_info {
 	pid_t		pid;		/* PID */
 	bool		kernel_thread;	/* true if process is kernel thread */
 	char		*cmdline;	/* Process name from cmdline */
@@ -67,14 +67,14 @@ typedef struct __attribute__ ((__packed__)) proc_info {
 } proc_info_t;
 
 /* UID cache */
-typedef struct __attribute__ ((__packed__)) uname_cache_t {
+typedef struct uname_cache_t {
 	uid_t		uid;		/* User UID */
 	char *		name;		/* User name */
 	struct uname_cache_t *next;
 } uname_cache_t;
 
 /* wakeup event information per process */
-typedef struct __attribute__ ((__packed__)) mem_info_t {
+typedef struct mem_info_t {
 	pid_t		pid;		/* process id */
 	uid_t		uid;		/* process' UID */
 	proc_info_t 	*proc;		/* cached process info */
