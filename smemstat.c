@@ -659,7 +659,7 @@ static proc_info_t *proc_cache_find_by_pid(const pid_t pid)
  */
 static void proc_cache_cleanup(void)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < PROC_HASH_TABLE_SIZE; i++) {
 		proc_info_t *p = proc_cache_hash[i];
@@ -768,7 +768,7 @@ static uname_cache_t *uname_cache_find(const uid_t uid)
  */
 static void uname_cache_cleanup(void)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < UNAME_HASH_TABLE_SIZE; i++) {
 		uname_cache_t *u = uname_cache[i];
