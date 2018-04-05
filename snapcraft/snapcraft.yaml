@@ -1,13 +1,10 @@
 name: smemstat
-version: 0.01.16-20161209-95-b46ae3a
+version: 0.01.18-20180405-112-5022076
 summary: memory usage monitoring tool
 description: smemstat reports the physical memory usage taking into consideration shared memory.  The tool can either report a current snapshot of memory usage or periodically dump out any changes in memory.
 confinement: strict
 type: app
-grade: stable
-
-plugs:
-     system-observe: null
+grade: devel
 
 parts:
     smemstat:
@@ -19,4 +16,8 @@ parts:
 apps:
     smemstat:
         command: usr/bin/smemstat
+        plugs:
+          - system-observe
+          - system-trace
+          - process-control
 
