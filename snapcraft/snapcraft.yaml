@@ -4,7 +4,7 @@ summary: memory usage monitoring tool
 description: smemstat reports the physical memory usage taking into consideration shared memory.  The tool can either report a current snapshot of memory usage or periodically dump out any changes in memory.
 confinement: strict
 type: app
-grade: devel
+grade: stable
 
 parts:
     smemstat:
