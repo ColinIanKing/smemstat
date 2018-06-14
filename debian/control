@@ -14,4 +14,3 @@ Description: memory usage monitoring tool
  into consideration shared memory.  The tool can
  either report a current snapshot of memory usage
  or periodically dump out any changes in memory.
-
