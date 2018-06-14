@@ -18,6 +18,7 @@
  * Author: Colin Ian King <colin.king@canonical.com>
  */
 #define _GNU_SOURCE
+#define _XOPEN_SOURCE_EXTENDED
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,6 +42,7 @@
 #include <sys/ioctl.h>
 #include <ncurses.h>
 #include <math.h>
+#include <locale.h>
 
 #define UNAME_HASH_TABLE_SIZE	(521)
 #define PROC_HASH_TABLE_SIZE 	(503)
@@ -57,6 +59,7 @@
 #define OPT_MEM_ALL		(OPT_MEM_IN_KBYTES | OPT_MEM_IN_MBYTES | OPT_MEM_IN_GBYTES)
 #define OPT_TOP			(0x00000100)
 #define OPT_TOP_TOTAL		(0x00000200)
+#define OPT_ARROW		(0x00000400)
 
 /* process specific information */
 typedef struct proc_info {
@@ -1104,15 +1107,20 @@ static inline char *mem_cmdline(const mem_info_t *m)
  *  mem_dump()
  *	dump out memory usage
  */
-static int mem_dump(FILE *json, mem_info_t *mem_info)
+static int mem_dump(
+	FILE *json,
+	mem_info_t *mem_info_old,
+	mem_info_t *mem_info_new)
 {
 	mem_info_t *m, **l;
 	mem_info_t *sorted = NULL;
 	int64_t	t_swap = 0, t_uss = 0, t_pss = 0, t_rss = 0;
+	int64_t t_d_swap = 0, t_d_uss = 0, t_d_pss = 0, t_d_rss = 0;
 	char s_swap[12], s_uss[12], s_pss[12], s_rss[12];
 	const int pid_size = pid_max_digits();
 
-	for (m = mem_info; m; m = m->next) {
+	for (m = mem_info_new; m; m = m->next) {
+		mem_delta(m, mem_info_old);
 		for (l = &sorted; *l; l = &(*l)->s_next) {
 			if ((*l)->pss < m->pss) {
 				m->s_next = (*l);
@@ -1125,6 +1133,46 @@ static int mem_dump(FILE *json, mem_info_t *mem_info)
 		t_uss  += m->uss;
 		t_pss  += m->pss;
 		t_rss  += m->rss;
+
+		t_d_swap += m->d_swap;
+		t_d_uss  += m->d_uss;
+		t_d_pss  += m->d_pss;
+		t_d_rss  += m->d_rss;
+	}
+
+	for (m = mem_info_old; m; m = m->next) {
+		if (m->alive)
+			continue;
+
+		/* Process has died, so include it as -ve delta */
+		for (l = &sorted; *l; l = &(*l)->d_next) {
+			if ((*l)->d_pss < m->d_pss) {
+				m->d_next = (*l);
+				break;
+			}
+		}
+		*l = m;
+
+		t_swap -= m->swap;
+		t_uss  -= m->uss;
+		t_pss  -= m->pss;
+		t_rss  -= m->rss;
+
+		m->d_swap = -m->swap;
+		m->d_uss  = -m->uss;
+		m->d_pss  = -m->pss;
+		m->d_rss  = -m->rss;
+
+		t_d_swap += m->d_swap;
+		t_d_uss  += m->d_uss;
+		t_d_pss  += m->d_pss;
+		t_d_rss  += m->d_rss;
+		t_d_rss  -= m->rss;
+
+		m->swap = 0;
+		m->uss = 0;
+		m->pss = 0;
+		m->rss = 0;
 	}
 
 	if (json) {
@@ -1132,7 +1180,7 @@ static int mem_dump(FILE *json, mem_info_t *mem_info)
 	}
 
 	if (!(opt_flags & OPT_QUIET))
-		df.df_printf(" %*.*s      Swap       USS       PSS       RSS User       Command\n",
+		df.df_printf(" %*.*s      Swap       USS       PSS       RSS D User       Command\n",
 			pid_size, pid_size, "PID");
 
 	for (m = sorted; m; m = m->s_next) {
@@ -1142,10 +1190,14 @@ static int mem_dump(FILE *json, mem_info_t *mem_info)
 		mem_to_str((double)m->pss, s_pss, sizeof(s_pss));
 		mem_to_str((double)m->rss, s_rss, sizeof(s_rss));
 
-		if (!(opt_flags & OPT_QUIET))
-			df.df_printf(" %*d %9s %9s %9s %9s %-10.10s %s\n",
+		if (!(opt_flags & OPT_QUIET)) {
+			int64_t delta = m->d_swap + m->d_uss + m->d_pss + m->d_rss;
+			char *arrow = delta < 0 ? "\u2193" : (delta > 0 ? "\u2191" : " ");
+
+			df.df_printf(" %*d %9s %9s %9s %9s %s %-10.10s %s\n",
 				pid_size, m->pid, s_swap, s_uss, s_pss, s_rss,
-				uname_name(m->uname), cmd);
+				arrow, uname_name(m->uname), cmd);
+		}
 
 		if (json) {
 			fprintf(json, "      {\n");
@@ -1282,10 +1334,11 @@ static int mem_dump_diff(
 		mem_to_str((double)m->d_pss / duration, s_pss, sizeof(s_pss));
 		mem_to_str((double)m->d_rss / duration, s_rss, sizeof(s_rss));
 
-		if (!(opt_flags & OPT_QUIET))
+		if (!(opt_flags & OPT_QUIET)) {
 			df.df_printf(" %*d %9s %9s %9s %9s %-10.10s %s\n",
 				pid_size, m->pid, s_swap, s_uss, s_pss, s_rss,
 				uname_name(m->uname), cmd);
+		}
 
 		if (json) {
 			fprintf(json, "          {\n");
@@ -1460,6 +1513,9 @@ int main(int argc, char **argv)
 		if (c == -1)
 			break;
 		switch (c) {
+		case 'a':
+			opt_flags |= OPT_ARROW;
+			break;
 		case 'c':
 			opt_flags |= OPT_CMD_COMM;
 			break;
@@ -1516,6 +1572,8 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
+	setlocale(LC_ALL, "");
+
 	if (optind < argc) {
 		errno = 0;
 		duration = strtof(argv[optind++], NULL);
@@ -1554,7 +1612,7 @@ int main(int argc, char **argv)
 
 	if (count == 0) {
 		if (mem_get_all_pids(&mem_info_new, &npids) == 0) {
-			mem_dump(json_file, mem_info_new);
+			mem_dump(json_file, mem_info_old, mem_info_new);
 			mem_report_size();
 		}
 	} else {
@@ -1660,7 +1718,7 @@ retry:
 				goto free_cache;
 
 			if (opt_flags & OPT_TOP_TOTAL) {
-				mem_dump(json_file, mem_info_new);
+				mem_dump(json_file, mem_info_old, mem_info_new);
 			} else {
 				mem_dump_diff(json_file, mem_info_old, mem_info_new, duration);
 			}
