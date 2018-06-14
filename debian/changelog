@@ -1,3 +1,20 @@
+smemstat (0.02.00-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * debian/control: change build depends, now use libncurses5w-dev
+  * debian/control: update debhelper to version 11 or higher
+  * debian/compat: update to 11
+  * debian/copyright: use secure URI
+  * debian/control: remove trailing empty line
+  * Makefile: use ncursesw for utf-8
+  * Add delta field showing change in memory with -T option
+  * Make snapcraft stable
+  * snapcraft: update interfaces
+  * snapcraft: make confinement strict
+  * Make some index variables size_t
+
+ -- Colin King <colin.king@canonical.com>  Thu, 14 Jun 2018 08:34:12 +0100
+
 smemstat (0.01.18-1) unstable; urgency=medium
 
   * Makefile: bump version
