@@ -37,7 +37,7 @@ MANDIR=/usr/share/man/man8
 OBJS = smemstat.o 
 
 smemstat: $(OBJS) Makefile
-	$(CC) $(CFLAGS) $(OBJS) -lm -lncurses -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(OBJS) -lm -lncursesw -o $@ $(LDFLAGS)
 
 smemstat.8.gz: smemstat.8
 	gzip -c $< > $@
