@@ -13,6 +13,7 @@ parts:
         build-packages:
             - gcc
             - make
+            - libncursesw5-dev
 apps:
     smemstat:
         command: usr/bin/smemstat
