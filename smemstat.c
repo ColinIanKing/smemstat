@@ -247,12 +247,12 @@ static void smemstat_noop(void)
  */
 static void smemstat_top_setup(void)
 {
-	initscr();
-	cbreak();
-	noecho();
-	nodelay(stdscr, 1);
-	keypad(stdscr, 1);
-	curs_set(0);
+	(void)initscr();
+	(void)cbreak();
+	(void)noecho();
+	(void)nodelay(stdscr, 1);
+	(void)keypad(stdscr, 1);
+	(void)curs_set(0);
 }
 
 /*
@@ -262,11 +262,11 @@ static void smemstat_top_setup(void)
 static void smemstat_top_endwin(void)
 {
 	df.df_winsize(true);
-	resizeterm(rows, cols);
-	refresh();
+	(void)resizeterm(rows, cols);
+	(void)refresh();
 	resized = false;
-	clear();
-	endwin();
+	(void)clear();
+	(void)endwin();
 }
 
 /*
@@ -275,7 +275,7 @@ static void smemstat_top_endwin(void)
  */
 static void smemstat_top_clear(void)
 {
-	clear();
+	(void)clear();
 }
 
 /*
@@ -284,7 +284,7 @@ static void smemstat_top_clear(void)
  */
 static void smemstat_top_refresh(void)
 {
-	refresh();
+	(void)refresh();
 }
 
 /*
@@ -315,7 +315,7 @@ static void smemstat_top_winsize(bool redo)
 	(void)redo;
 
 	smemstat_generic_winsize(true);
-	resizeterm(rows, cols);
+	(void)resizeterm(rows, cols);
 }
 
 /*
@@ -337,7 +337,7 @@ static void smemstat_top_printf(char *fmt, ...)
 	va_start(ap, fmt);
 	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
 	buf[sz] = '\0';
-	mvprintw(cury, 0, buf);
+	(void)mvprintw(cury, 0, buf);
 	va_end(ap);
 	cury++;
 }
@@ -353,7 +353,7 @@ static void smemstat_normal_printf(char *fmt, ...)
 
 	va_start(ap, fmt);
 	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
-	fputs(buf, stdout);
+	(void)fputs(buf, stdout);
 	va_end(ap);
 }
 
@@ -394,7 +394,7 @@ static void display_restore(void)
 static void out_of_memory(const char *msg)
 {
 	display_restore();
-	fprintf(stderr, "Out of memory: %s.\n", msg);
+	(void)fprintf(stderr, "Out of memory: %s.\n", msg);
 }
 
 /*
@@ -443,18 +443,18 @@ static void mem_to_str(const double val, char *buf, const size_t buflen)
 	double v = (val < 0) ? -val : val;
 	char unit;
 
-	memset(buf, 0, buflen);
+	(void)memset(buf, 0, buflen);
 
 	if (opt_flags & OPT_MEM_IN_KBYTES) {
-		snprintf(buf, buflen, "%9.0f", val / 1024.0);
+		(void)snprintf(buf, buflen, "%9.0f", val / 1024.0);
 		return;
 	}
 	if (opt_flags & OPT_MEM_IN_MBYTES) {
-		snprintf(buf, buflen, "%9.3f", val / (1024.0 * 1024.0));
+		(void)snprintf(buf, buflen, "%9.3f", val / (1024.0 * 1024.0));
 		return;
 	}
 	if (opt_flags & OPT_MEM_IN_GBYTES) {
-		snprintf(buf, buflen, "%9.3f", val / (1024.0 * 1024.0 * 1024.0));
+		(void)snprintf(buf, buflen, "%9.3f", val / (1024.0 * 1024.0 * 1024.0));
 		return;
 	}
 
@@ -471,7 +471,7 @@ static void mem_to_str(const double val, char *buf, const size_t buflen)
 		s = (double)val / (1024.0 * 1024.0 * 1024.0);
 		unit = 'G';
 	}
-	snprintf(buf, buflen, "%7.1f %c", s, unit);
+	(void)snprintf(buf, buflen, "%7.1f %c", s, unit);
 }
 
 /*
@@ -491,7 +491,7 @@ static void mem_report_size(void)
 	else if (opt_flags & OPT_MEM_IN_GBYTES)
 		unit = "giga";
 
-	printf("Note: Memory reported in units of %sbytes.\n", unit);
+	(void)printf("Note: Memory reported in units of %sbytes.\n", unit);
 }
 
 /*
@@ -504,7 +504,7 @@ static char *get_pid_comm(const pid_t pid)
 	int fd;
 	ssize_t ret;
 
-	snprintf(buffer, sizeof(buffer), "/proc/%i/comm", pid);
+	(void)snprintf(buffer, sizeof(buffer), "/proc/%i/comm", pid);
 
 	if ((fd = open(buffer, O_RDONLY)) < 0)
 		return NULL;
@@ -530,7 +530,7 @@ static char *get_pid_cmdline(const pid_t pid)
 	int fd;
 	ssize_t ret;
 
-	snprintf(buffer, sizeof(buffer), "/proc/%i/cmdline", pid);
+	(void)snprintf(buffer, sizeof(buffer), "/proc/%i/cmdline", pid);
 
 	if ((fd = open(buffer, O_RDONLY)) < 0)
 		return NULL;
@@ -567,6 +567,7 @@ static char *get_pid_cmdline(const pid_t pid)
 
 	if (opt_flags & OPT_DIRNAME_STRIP) {
 		char *base = buffer;
+
 		for (ptr = buffer; *ptr; ptr++) {
 			if (isblank(*ptr))
 				break;
@@ -588,7 +589,7 @@ static bool pid_exists(const pid_t pid)
 	char path[PATH_MAX];
 	struct stat statbuf;
 
-	snprintf(path, sizeof(path), "/proc/%i", pid);
+	(void)snprintf(path, sizeof(path), "/proc/%i", pid);
 	return stat(path, &statbuf) == 0;
 }
 
@@ -709,7 +710,7 @@ static double gettime_to_double(void)
 
 	if (gettimeofday(&tv, NULL) < 0) {
 		display_restore();
-		fprintf(stderr, "gettimeofday failed: errno=%d (%s)\n",
+		(void)fprintf(stderr, "gettimeofday failed: errno=%d (%s)\n",
 			errno, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
@@ -746,7 +747,7 @@ static uname_cache_t *uname_cache_find(const uid_t uid)
 	if ((pw = getpwuid(uid)) == NULL) {
 		char buf[16];
 
-		snprintf(buf, sizeof(buf), "%i", uid);
+		(void)snprintf(buf, sizeof(buf), "%i", uid);
 		uname->name = strdup(buf);
 	} else {
 		uname->name = strdup(pw->pw_name);
@@ -870,7 +871,7 @@ static mem_info_t *mem_cache_alloc(void)
 		mem = mem_info_cache;
 		mem_info_cache = mem_info_cache->next;
 
-		memset(mem, 0, sizeof(*mem));
+		(void)memset(mem, 0, sizeof(*mem));
 
 		return mem;
 	}
@@ -975,11 +976,11 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 			return 0;
 	}
 
-	snprintf(path, sizeof(path), "/proc/%i/smaps", pid);
+	(void)snprintf(path, sizeof(path), "/proc/%i/smaps", pid);
 	if ((fp = fopen(path, "r")) == NULL)
 		return 0;	/* Gone away? */
 
-	memset(&m, 0, sizeof(m));
+	(void)memset(&m, 0, sizeof(m));
 
 	errno = 0;
 	while (mem_get_entry(fp, &m) != -1)
@@ -995,7 +996,7 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 	if ((new_m = mem_cache_alloc()) == NULL)
 		return -1;
 
-	memcpy(new_m, &m, sizeof(m));
+	(void)memcpy(new_m, &m, sizeof(m));
 	new_m->pid = pid;
 	new_m->proc = proc_cache_find_by_pid(pid);
 	new_m->uid = 0;
@@ -1003,7 +1004,7 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
 	new_m->next = *mem;
 	*mem = new_m;
 
-	snprintf(path, sizeof(path), "/proc/%i/status", pid);
+	(void)snprintf(path, sizeof(path), "/proc/%i/status", pid);
 	if ((fp = fopen(path, "r")) == NULL)
 		return 0;
 
@@ -1043,7 +1044,7 @@ static int mem_get_all_pids(mem_info_t **mem, size_t *npids)
 
 	if ((dir = opendir("/proc")) == NULL) {
 		display_restore();
-		fprintf(stderr, "Cannot read directory /proc\n");
+		(void)fprintf(stderr, "Cannot read directory /proc\n");
 		return -1;
 	}
 
@@ -1176,7 +1177,7 @@ static int mem_dump(
 	}
 
 	if (json) {
-		fprintf(json, "    \"smem-per-process\":[\n");
+		(void)fprintf(json, "    \"smem-per-process\":[\n");
 	}
 
 	if (!(opt_flags & OPT_QUIET))
@@ -1185,6 +1186,7 @@ static int mem_dump(
 
 	for (m = sorted; m; m = m->s_next) {
 		const char *cmd = mem_cmdline(m);
+
 		mem_to_str((double)m->swap, s_swap, sizeof(s_swap));
 		mem_to_str((double)m->uss, s_uss, sizeof(s_uss));
 		mem_to_str((double)m->pss, s_pss, sizeof(s_pss));
@@ -1200,16 +1202,16 @@ static int mem_dump(
 		}
 
 		if (json) {
-			fprintf(json, "      {\n");
-			fprintf(json, "        \"pid\":%d,\n", m->pid);
-			fprintf(json, "        \"user\":\"%s\",\n",
+			(void)fprintf(json, "      {\n");
+			(void)fprintf(json, "        \"pid\":%d,\n", m->pid);
+			(void)fprintf(json, "        \"user\":\"%s\",\n",
 				uname_name(m->uname));
-			fprintf(json, "        \"command\":\"%s\",\n", cmd);
-			fprintf(json, "        \"swap\":%" PRIi64 ",\n", m->swap);
-			fprintf(json, "        \"uss\":%" PRIi64 ",\n", m->uss);
-			fprintf(json, "        \"pss\":%" PRIi64 ",\n", m->pss);
-			fprintf(json, "        \"rss\":%" PRIi64 "\n", m->rss);
-			fprintf(json, "      }%s\n",
+			(void)fprintf(json, "        \"command\":\"%s\",\n", cmd);
+			(void)fprintf(json, "        \"swap\":%" PRIi64 ",\n", m->swap);
+			(void)fprintf(json, "        \"uss\":%" PRIi64 ",\n", m->uss);
+			(void)fprintf(json, "        \"pss\":%" PRIi64 ",\n", m->pss);
+			(void)fprintf(json, "        \"rss\":%" PRIi64 "\n", m->rss);
+			(void)fprintf(json, "      }%s\n",
 				m->s_next ? "," : "");
 		}
 	}
@@ -1223,13 +1225,13 @@ static int mem_dump(
 		df.df_printf("Total: %9s %9s %9s %9s\n\n", s_swap, s_uss, s_pss, s_rss);
 
 	if (json) {
-		fprintf(json, "    ],\n");
-		fprintf(json, "    \"smem-total\":{\n");
-		fprintf(json, "      \"swap\":%" PRIi64 ",\n", t_swap);
-		fprintf(json, "      \"uss\":%" PRIi64 ",\n", t_uss);
-		fprintf(json, "      \"pss\":%" PRIi64 ",\n", t_pss);
-		fprintf(json, "      \"rss\":%" PRIi64 "\n", t_rss);
-		fprintf(json, "    }\n");
+		(void)fprintf(json, "    ],\n");
+		(void)fprintf(json, "    \"smem-total\":{\n");
+		(void)fprintf(json, "      \"swap\":%" PRIi64 ",\n", t_swap);
+		(void)fprintf(json, "      \"uss\":%" PRIi64 ",\n", t_uss);
+		(void)fprintf(json, "      \"pss\":%" PRIi64 ",\n", t_pss);
+		(void)fprintf(json, "      \"rss\":%" PRIi64 "\n", t_rss);
+		(void)fprintf(json, "    }\n");
 	}
 
 	return 0;
@@ -1318,8 +1320,8 @@ static int mem_dump_diff(
 			fprintf(json, "      ,\n");
 		}
 		first = false;
-		fprintf(json, "      {\n");
-		fprintf(json, "        \"smem-per-process\":[\n");
+		(void)fprintf(json, "      {\n");
+		(void)fprintf(json, "        \"smem-per-process\":[\n");
 	}
 
 	if (!(opt_flags & OPT_QUIET))
@@ -1341,20 +1343,20 @@ static int mem_dump_diff(
 		}
 
 		if (json) {
-			fprintf(json, "          {\n");
-			fprintf(json, "            \"pid\":%d,\n", m->pid);
-			fprintf(json, "            \"command\":\"%s\",\n", cmd);
-			fprintf(json, "            \"user\":\"%s\",\n",
+			(void)fprintf(json, "          {\n");
+			(void)fprintf(json, "            \"pid\":%d,\n", m->pid);
+			(void)fprintf(json, "            \"command\":\"%s\",\n", cmd);
+			(void)fprintf(json, "            \"user\":\"%s\",\n",
 				uname_name(m->uname));
-			fprintf(json, "            \"swap\":%" PRIi64 ",\n", m->swap);
-			fprintf(json, "            \"uss\":%" PRIi64 ",\n", m->uss);
-			fprintf(json, "            \"pss\":%" PRIi64 ",\n", m->pss);
-			fprintf(json, "            \"rss\":%" PRIi64 ",\n", m->rss);
-			fprintf(json, "            \"swap-delta\":%" PRIi64 ",\n", m->d_swap);
-			fprintf(json, "            \"uss-delta\":%" PRIi64 ",\n", m->d_uss);
-			fprintf(json, "            \"pss-delta\":%" PRIi64 ",\n", m->d_pss);
-			fprintf(json, "            \"rss-delta\":%" PRIi64 "\n", m->d_rss);
-			fprintf(json, "          }%s\n",
+			(void)fprintf(json, "            \"swap\":%" PRIi64 ",\n", m->swap);
+			(void)fprintf(json, "            \"uss\":%" PRIi64 ",\n", m->uss);
+			(void)fprintf(json, "            \"pss\":%" PRIi64 ",\n", m->pss);
+			(void)fprintf(json, "            \"rss\":%" PRIi64 ",\n", m->rss);
+			(void)fprintf(json, "            \"swap-delta\":%" PRIi64 ",\n", m->d_swap);
+			(void)fprintf(json, "            \"uss-delta\":%" PRIi64 ",\n", m->d_uss);
+			(void)fprintf(json, "            \"pss-delta\":%" PRIi64 ",\n", m->d_pss);
+			(void)fprintf(json, "            \"rss-delta\":%" PRIi64 "\n", m->d_rss);
+			(void)fprintf(json, "          }%s\n",
 				m->d_next ? "," : "");
 		}
 		m->d_next = NULL;	/* Nullify for next round */
@@ -1370,18 +1372,18 @@ static int mem_dump_diff(
 		df.df_printf("Total: %9s %9s %9s %9s\n\n", s_swap, s_uss, s_pss, s_rss);
 
 	if (json) {
-		fprintf(json, "        ],\n");
-		fprintf(json, "        \"smem-total\":{\n");
-		fprintf(json, "          \"swap\":%" PRIi64 ",\n", t_swap);
-		fprintf(json, "          \"uss\":%" PRIi64 ",\n", t_uss);
-		fprintf(json, "          \"pss\":%" PRIi64 ",\n", t_pss);
-		fprintf(json, "          \"rss\":%" PRIi64 ",\n", t_rss);
-		fprintf(json, "          \"swap-delta\":%" PRIi64 ",\n", t_d_swap);
-		fprintf(json, "          \"uss-delta\":%" PRIi64 ",\n", t_d_uss);
-		fprintf(json, "          \"pss-delta\":%" PRIi64 ",\n", t_d_pss);
-		fprintf(json, "          \"rss-delta\":%" PRIi64 "\n", t_d_rss);
-		fprintf(json, "        }\n");
-		fprintf(json, "      }\n");
+		(void)fprintf(json, "        ],\n");
+		(void)fprintf(json, "        \"smem-total\":{\n");
+		(void)fprintf(json, "          \"swap\":%" PRIi64 ",\n", t_swap);
+		(void)fprintf(json, "          \"uss\":%" PRIi64 ",\n", t_uss);
+		(void)fprintf(json, "          \"pss\":%" PRIi64 ",\n", t_pss);
+		(void)fprintf(json, "          \"rss\":%" PRIi64 ",\n", t_rss);
+		(void)fprintf(json, "          \"swap-delta\":%" PRIi64 ",\n", t_d_swap);
+		(void)fprintf(json, "          \"uss-delta\":%" PRIi64 ",\n", t_d_uss);
+		(void)fprintf(json, "          \"pss-delta\":%" PRIi64 ",\n", t_d_pss);
+		(void)fprintf(json, "          \"rss-delta\":%" PRIi64 "\n", t_d_rss);
+		(void)fprintf(json, "        }\n");
+		(void)fprintf(json, "      }\n");
 	}
 
 	return 0;
@@ -1432,7 +1434,7 @@ static int parse_pid_list(char *arg)
 			errno = 0;
 			pid = strtol(token, NULL, 10);
 			if (errno) {
-				fprintf(stderr, "Invalid pid specified.\n");
+				(void)fprintf(stderr, "Invalid pid specified.\n");
 				pid_list_cleanup();
 				return -1;
 			}
@@ -1474,7 +1476,7 @@ nomem:
  */
 static void show_usage(void)
 {
-	printf("%s, version %s\n\n"
+	(void)printf("%s, version %s\n\n"
 		"Usage: %s [options] [duration] [count]\n"
 		"Options are:\n"
 		"  -c\t\tget command name from processes comm field\n"
@@ -1564,11 +1566,11 @@ int main(int argc, char **argv)
 	}
 
 	if (count_bits(opt_flags & OPT_CMD_ALL) > 1) {
-		fprintf(stderr, "Cannot have -c, -l, -s at same time.\n");
+		(void)fprintf(stderr, "Cannot have -c, -l, -s at same time.\n");
 		exit(EXIT_FAILURE);
 	}
 	if (count_bits(opt_flags & OPT_MEM_ALL) > 1) {
-		fprintf(stderr, "Cannot have -k, -m, -g at same time.\n");
+		(void)fprintf(stderr, "Cannot have -k, -m, -g at same time.\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -1578,11 +1580,11 @@ int main(int argc, char **argv)
 		errno = 0;
 		duration = strtof(argv[optind++], NULL);
 		if (errno) {
-			fprintf(stderr, "Invalid or out of range value for duration\n");
+			(void)fprintf(stderr, "Invalid or out of range value for duration\n");
 			exit(EXIT_FAILURE);
 		}
 		if (duration < 1.0) {
-			fprintf(stderr, "Duration must be 1.0 or more seconds.\n");
+			(void)fprintf(stderr, "Duration must be 1.0 or more seconds.\n");
 			exit(EXIT_FAILURE);
 		}
 		count = -1;
@@ -1593,21 +1595,21 @@ int main(int argc, char **argv)
 		errno = 0;
 		count = strtol(argv[optind++], NULL, 10);
 		if (errno) {
-			fprintf(stderr, "Invalid or out of range value for count\n");
+			(void)fprintf(stderr, "Invalid or out of range value for count\n");
 			exit(EXIT_FAILURE);
 		}
 		if (count < 1) {
-			fprintf(stderr, "Count must be > 0\n");
+			(void)fprintf(stderr, "Count must be > 0\n");
 			exit(EXIT_FAILURE);
 		}
 	}
 
 	if (json_filename) {
 		if ((json_file = fopen(json_filename, "w")) == NULL) {
-			fprintf(stderr, "Cannot open json output file '%s'.\n", json_filename);
+			(void)fprintf(stderr, "Cannot open json output file '%s'.\n", json_filename);
 			exit(EXIT_FAILURE);
 		}
-		fprintf(json_file, "{\n  \"%s\":{\n", app_name);
+		(void)fprintf(json_file, "{\n  \"%s\":{\n", app_name);
 	}
 
 	if (count == 0) {
@@ -1634,36 +1636,36 @@ int main(int argc, char **argv)
 		mem_cache_prealloc((npids * 5) / 4);
 
 		if (gettimeofday(&tv1, NULL) < 0) {
-			fprintf(stderr, "gettimeofday failed: errno=%d (%s)\n",
+			(void)fprintf(stderr, "gettimeofday failed: errno=%d (%s)\n",
 				errno, strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 
 		if (!(opt_flags & OPT_TOP))
-			printf("Change in memory (average per second):\n");
+			(void)printf("Change in memory (average per second):\n");
 
-		memset(&new_action, 0, sizeof(new_action));
+		(void)memset(&new_action, 0, sizeof(new_action));
 		for (i = 0; signals[i] != -1; i++) {
 			new_action.sa_handler = handle_sig;
 			sigemptyset(&new_action.sa_mask);
 			new_action.sa_flags = 0;
 
 			if (sigaction(signals[i], &new_action, NULL) < 0) {
-				fprintf(stderr, "sigaction failed: errno=%d (%s)\n",
+				(void)fprintf(stderr, "sigaction failed: errno=%d (%s)\n",
 					errno, strerror(errno));
 				exit(EXIT_FAILURE);
 			}
 		}
-		memset(&new_action, 0, sizeof(new_action));
+		(void)memset(&new_action, 0, sizeof(new_action));
 		new_action.sa_handler = handle_sigwinch;
 		if (sigaction(SIGWINCH, &new_action , NULL) < 0) {
-			fprintf(stderr, "sigaction failed: errno=%d (%s)\n",
+			(void)fprintf(stderr, "sigaction failed: errno=%d (%s)\n",
 				errno, strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 
 		if (json_file) {
-			fprintf(json_file, "    \"periodic-samples\":[\n");
+			(void)fprintf(json_file, "    \"periodic-samples\":[\n");
 		}
 
 		time_now = time_start = gettime_to_double();
@@ -1708,7 +1710,7 @@ retry:
 					}
 				} else {
 					display_restore();
-					fprintf(stderr, "Select failed: %s\n", strerror(errno));
+					(void)fprintf(stderr, "Select failed: %s\n", strerror(errno));
 					break;
 				}
 			}
@@ -1731,9 +1733,8 @@ retry:
 		}
 		mem_report_size();
 
-		if (json_file) {
-			fprintf(json_file, "    ]\n");
-		}
+		if (json_file)
+			(void)fprintf(json_file, "    ]\n");
 
 free_cache:
 		mem_cache_free_list(mem_info_old);
@@ -1746,7 +1747,7 @@ free_cache:
 	pid_list_cleanup();
 
 	if (json_file) {
-		fprintf(json_file, "  }\n}\n");
+		(void)fprintf(json_file, "  }\n}\n");
 		(void)fclose(json_file);
 	}
 
