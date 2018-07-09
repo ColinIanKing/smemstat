@@ -109,13 +109,13 @@ typedef struct {
 	void (*df_endwin)(void);	/* display end */
 	void (*df_clear)(void);		/* display clear */
 	void (*df_refresh)(void);	/* display refresh */
-	void (*df_winsize)(bool redo);	/* display get size */
-	void (*df_printf)(char *str, ...) __attribute__((format(printf, 1, 2)));
+	void (*df_winsize)(const bool redo);	/* display get size */
+	void (*df_printf)(const char *str, ...) __attribute__((format(printf, 1, 2)));
 } display_funcs_t;
 
 static uname_cache_t *uname_cache[UNAME_HASH_TABLE_SIZE];
 static proc_info_t *proc_cache_hash[PROC_HASH_TABLE_SIZE];
-static const char *app_name = "smemstat";
+static const char *const app_name = "smemstat";
 
 static bool stop_smemstat = false;	/* set by sighandler */
 static unsigned int opt_flags;		/* options */
@@ -127,10 +127,10 @@ static int rows = 25;			/* display rows */
 static int cols = 80;			/* display columns */
 static int cury = 0;			/* current display y position */
 
-static void smemstat_top_printf(char *fmt, ...) \
+static void smemstat_top_printf(const char *fmt, ...) \
 	__attribute__((format(printf, 1, 2)));
 
-static void smemstat_normal_printf(char *fmt, ...) \
+static void smemstat_normal_printf(const char *fmt, ...) \
 	__attribute__((format(printf, 1, 2)));
 
 /*
@@ -291,7 +291,7 @@ static void smemstat_top_refresh(void)
  *  smemstat_generic_winsize()
  *	get tty size in all modes
  */
-static void smemstat_generic_winsize(bool redo)
+static void smemstat_generic_winsize(const bool redo)
 {
 	if (redo) {
 		struct winsize ws;
@@ -310,7 +310,7 @@ static void smemstat_generic_winsize(bool redo)
  *  smemstat_top_winsize()
  *	get tty size in top mode
  */
-static void smemstat_top_winsize(bool redo)
+static void smemstat_top_winsize(const bool redo)
 {
 	(void)redo;
 
@@ -322,7 +322,7 @@ static void smemstat_top_winsize(bool redo)
  *  smemstat_top_printf
  *	print text to display width in top mode
  */
-static void smemstat_top_printf(char *fmt, ...)
+static void smemstat_top_printf(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[256];
@@ -346,7 +346,7 @@ static void smemstat_top_printf(char *fmt, ...)
  *  smemstat_normal_printf
  *	normal tty printf
  */
-static void smemstat_normal_printf(char *fmt, ...)
+static void smemstat_normal_printf(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[256];
@@ -358,7 +358,7 @@ static void smemstat_normal_printf(char *fmt, ...)
 }
 
 /* ncurses based "top" mode display functions */
-static display_funcs_t df_top = {
+static const display_funcs_t df_top = {
 	smemstat_top_setup,
 	smemstat_top_endwin,
 	smemstat_top_clear,
@@ -368,7 +368,7 @@ static display_funcs_t df_top = {
 };
 
 /* normal tty mode display functions */
-static display_funcs_t df_normal = {
+static const display_funcs_t df_normal = {
 	smemstat_noop,
 	smemstat_noop,
 	smemstat_noop,
