@@ -1,3 +1,21 @@
+smemstat (0.02.01-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * debian/watch: look for .xz suffixed tarball
+  * Makefile: make .xz tarball for better compression
+  * Add .travis.yml file to make dist rule
+  * Add more constifications
+  * don't show arrow in one-shot mode
+  * Fix up some whitespacing
+  * Add some more constifications
+  * Voidify function returns
+  * snapcraft: add stage-packages entry
+  * debian/control: add libncurses-dev
+  * Add travis yaml file
+  * snapcraft: add libncursesw5-dev
+
+ -- Colin King <colin.king@canonical.com>  Tue, 10 Jul 2018 09:19:19 +0100
+
 smemstat (0.02.00-1) unstable; urgency=medium
 
   * Makefile: bump version
