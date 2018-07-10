@@ -683,7 +683,7 @@ static void proc_cache_cleanup(void)
  *  timeval_to_double
  *      timeval to a double
  */
-static inline double timeval_to_double(const struct timeval *tv)
+static inline double timeval_to_double(const struct timeval * const tv)
 {
 	return (double)tv->tv_sec + ((double)tv->tv_usec / 1000000.0);
 }
@@ -694,7 +694,7 @@ static inline double timeval_to_double(const struct timeval *tv)
  */
 static inline void double_to_timeval(
 	const double val,
-	struct timeval *tv)
+	struct timeval * const tv)
 {
 	tv->tv_sec = val;
 	tv->tv_usec = (val - (time_t)val) * 1000000.0;
@@ -791,7 +791,11 @@ static void uname_cache_cleanup(void)
  *  mem_get_size()
  *	parse proc sizes in K bytes
  */
-static int mem_get_size(FILE *fp, const char *field, const size_t len, uint64_t *size)
+static int mem_get_size(
+	FILE * const fp,
+	const char * const field,
+	const size_t len,
+	uint64_t *size)
 {
 	char buf[4096];
 	uint64_t size_k;
@@ -817,7 +821,9 @@ static int mem_get_size(FILE *fp, const char *field, const size_t len, uint64_t 
  *  mem_get_entry()
  *	parse a single memory mapping entry
  */
-static int mem_get_entry(FILE *fp, mem_info_t *mem)
+static int mem_get_entry(
+	FILE * const fp,
+	mem_info_t * const mem)
 {
 	uint64_t addr_start, addr_end, addr_offset;
 	int major, minor;
@@ -888,7 +894,7 @@ static mem_info_t *mem_cache_alloc(void)
  *	free a mem_info_t by just adding it to the
  *	mem_info_cache free list
  */
-static void mem_cache_free(mem_info_t *mem)
+static void mem_cache_free(mem_info_t * const mem)
 {
 	mem->next = mem_info_cache;
 	mem_info_cache = mem;
@@ -945,7 +951,7 @@ static void mem_cache_cleanup(void)
  *  mem_get_by_proc()
  *	get mem info for a specific proc
  */
-static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
+static int mem_get_by_proc(const pid_t pid, mem_info_t ** const mem)
 {
 	FILE *fp;
 	char path[PATH_MAX];
@@ -1036,7 +1042,7 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t **mem)
  *  mem_get_all_pids()
  *	scan mem and get mmap info
  */
-static int mem_get_all_pids(mem_info_t **mem, size_t *npids)
+static int mem_get_all_pids(mem_info_t ** const mem, size_t * const npids)
 {
 	DIR *dir;
 	struct dirent *entry;
@@ -1072,7 +1078,7 @@ static int mem_get_all_pids(mem_info_t **mem, size_t *npids)
  *  mem_delta()
  *	compute memory size change
  */
-static void mem_delta(mem_info_t *mem_new, mem_info_t *mem_old_list)
+static void mem_delta(mem_info_t * const mem_new, mem_info_t *const mem_old_list)
 {
 	mem_info_t *mem_old;
 
@@ -1096,7 +1102,7 @@ static void mem_delta(mem_info_t *mem_new, mem_info_t *mem_old_list)
  *  mem_cmdline()
  *	get command line if it is defined
  */
-static inline char *mem_cmdline(const mem_info_t *m)
+static inline char *mem_cmdline(const mem_info_t * const m)
 {
 	if (m->proc && m->proc->cmdline)
 		return m->proc->cmdline;
@@ -1109,9 +1115,9 @@ static inline char *mem_cmdline(const mem_info_t *m)
  *	dump out memory usage
  */
 static int mem_dump(
-	FILE *json,
-	mem_info_t *mem_info_old,
-	mem_info_t *mem_info_new,
+	FILE * const json,
+	mem_info_t * const mem_info_old,
+	mem_info_t * const mem_info_new,
 	const bool one_shot)
 {
 	mem_info_t *m, **l;
@@ -1195,7 +1201,7 @@ static int mem_dump(
 
 		if (!(opt_flags & OPT_QUIET)) {
 			int64_t delta = m->d_swap + m->d_uss + m->d_pss + m->d_rss;
-			char *arrow = delta < 0 ? "\u2193" : (delta > 0 ? "\u2191" : " ");
+			const char * const arrow = delta < 0 ? "\u2193" : (delta > 0 ? "\u2191" : " ");
 
 			df.df_printf(" %*d %9s %9s %9s %9s %s %-10.10s %s\n",
 				pid_size, m->pid, s_swap, s_uss, s_pss, s_rss,
@@ -1243,9 +1249,9 @@ static int mem_dump(
  *	dump differences between old and new events
  */
 static int mem_dump_diff(
-	FILE *json,
-	mem_info_t *mem_info_old,
-	mem_info_t *mem_info_new,
+	FILE * const json,
+	mem_info_t * const mem_info_old,
+	mem_info_t * const mem_info_new,
 	const double duration)
 {
 	mem_info_t *m, **l;
@@ -1423,7 +1429,7 @@ static void pid_list_cleanup(void)
  *	parse list of process IDs,
  *	collect process info in pids list
  */
-static int parse_pid_list(char *arg)
+static int parse_pid_list(char * const arg)
 {
 	char *str, *token;
 	pid_list_t *p;
