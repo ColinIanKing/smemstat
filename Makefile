@@ -47,12 +47,12 @@ dist:
 	mkdir smemstat-$(VERSION)
 	cp -rp Makefile smemstat.c smemstat.8 COPYING README scripts \
 		snapcraft .travis.yml smemstat-$(VERSION)
-	tar -zcf smemstat-$(VERSION).tar.gz smemstat-$(VERSION)
+	tar -Jcf smemstat-$(VERSION).tar.xz smemstat-$(VERSION)
 	rm -rf smemstat-$(VERSION)
 
 clean:
 	rm -f smemstat smemstat.o smemstat.8.gz
-	rm -f smemstat-$(VERSION).tar.gz
+	rm -f smemstat-$(VERSION).tar.xz
 	rm -f $(OBJS)
 
 install: smemstat smemstat.8.gz
