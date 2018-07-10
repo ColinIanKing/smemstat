@@ -1111,7 +1111,8 @@ static inline char *mem_cmdline(const mem_info_t *m)
 static int mem_dump(
 	FILE *json,
 	mem_info_t *mem_info_old,
-	mem_info_t *mem_info_new)
+	mem_info_t *mem_info_new,
+	const bool one_shot)
 {
 	mem_info_t *m, **l;
 	mem_info_t *sorted = NULL;
@@ -1198,7 +1199,7 @@ static int mem_dump(
 
 			df.df_printf(" %*d %9s %9s %9s %9s %s %-10.10s %s\n",
 				pid_size, m->pid, s_swap, s_uss, s_pss, s_rss,
-				arrow, uname_name(m->uname), cmd);
+				one_shot ? " " : arrow, uname_name(m->uname), cmd);
 		}
 
 		if (json) {
@@ -1615,7 +1616,7 @@ int main(int argc, char **argv)
 
 	if (count == 0) {
 		if (mem_get_all_pids(&mem_info_new, &npids) == 0) {
-			mem_dump(json_file, mem_info_old, mem_info_new);
+			mem_dump(json_file, mem_info_old, mem_info_new, true);
 			mem_report_size();
 		}
 	} else {
@@ -1721,7 +1722,7 @@ retry:
 				goto free_cache;
 
 			if (opt_flags & OPT_TOP_TOTAL) {
-				mem_dump(json_file, mem_info_old, mem_info_new);
+				mem_dump(json_file, mem_info_old, mem_info_new, false);
 			} else {
 				mem_dump_diff(json_file, mem_info_old, mem_info_new, duration);
 			}
