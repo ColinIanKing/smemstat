@@ -402,7 +402,7 @@ static void out_of_memory(const char *msg)
  *	fetch name from uname, handle
  *	unknown NULL unames too
  */
-static inline const char *uname_name(uname_cache_t *uname)
+static inline const char *uname_name(const uname_cache_t * const uname)
 {
 	return uname ? uname->name : "<unknown>";
 }
