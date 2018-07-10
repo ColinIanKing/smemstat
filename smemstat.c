@@ -1050,9 +1050,9 @@ static int mem_get_all_pids(mem_info_t **mem, size_t *npids)
 
 	while ((entry = readdir(dir)) != NULL) {
 		pid_t pid;
+
 		if (!isdigit(entry->d_name[0]))
 			continue;
-
 		pid = (pid_t)strtoul(entry->d_name, NULL, 10);
 
 		if (mem_get_by_proc(pid, mem) < 0) {
@@ -1512,6 +1512,7 @@ int main(int argc, char **argv)
 
 	for (;;) {
 		int c = getopt(argc, argv, "cCdghklmo:p:qstT");
+
 		if (c == -1)
 			break;
 		switch (c) {
