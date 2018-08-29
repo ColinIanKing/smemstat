@@ -1188,8 +1188,9 @@ static int mem_dump(
 	}
 
 	if (!(opt_flags & OPT_QUIET))
-		df.df_printf(" %*.*s      Swap       USS       PSS       RSS D User       Command\n",
-			pid_size, pid_size, "PID");
+		df.df_printf(" %*.*s      Swap       USS       PSS       RSS %sUser       Command\n",
+			pid_size, pid_size, "PID",
+			opt_flags & OPT_ARROW ? "D " : "");
 
 	for (m = sorted; m; m = m->s_next) {
 		const char *cmd = mem_cmdline(m);
@@ -1201,11 +1202,14 @@ static int mem_dump(
 
 		if (!(opt_flags & OPT_QUIET)) {
 			int64_t delta = m->d_swap + m->d_uss + m->d_pss + m->d_rss;
-			const char * const arrow = delta < 0 ? "\u2193" : (delta > 0 ? "\u2191" : " ");
+			const char * const arrow = (delta < 0) ? "\u2193 " :
+						   ((delta > 0) ? "\u2191 "  : "  ");
 
-			df.df_printf(" %*d %9s %9s %9s %9s %s %-10.10s %s\n",
+			df.df_printf(" %*d %9s %9s %9s %9s %s%-10.10s %s\n",
 				pid_size, m->pid, s_swap, s_uss, s_pss, s_rss,
-				one_shot ? " " : arrow, uname_name(m->uname), cmd);
+				one_shot ? " " :
+				opt_flags & OPT_ARROW ? arrow : "",
+				uname_name(m->uname), cmd);
 		}
 
 		if (json) {
@@ -1486,6 +1490,7 @@ static void show_usage(void)
 	(void)printf("%s, version %s\n\n"
 		"Usage: %s [options] [duration] [count]\n"
 		"Options are:\n"
+		"  -a\t\tshow memory change with up/down arrows\n"
 		"  -c\t\tget command name from processes comm field\n"
 		"  -d\t\tstrip directory basename off command information\n"
 		"  -g\t\treport memory in gigabytes\n"
@@ -1518,7 +1523,7 @@ int main(int argc, char **argv)
 	df = df_normal;
 
 	for (;;) {
-		int c = getopt(argc, argv, "cCdghklmo:p:qstT");
+		int c = getopt(argc, argv, "acCdghklmo:p:qstT");
 
 		if (c == -1)
 			break;
