@@ -1689,6 +1689,7 @@ int main(int argc, char **argv)
 		while (!stop_smemstat && (forever || count--)) {
 			struct timeval tv;
 			double secs;
+			int nchar;
 
 			df.df_clear();
 			cury = 0;
@@ -1725,6 +1726,28 @@ retry:
 					display_restore();
 					(void)fprintf(stderr, "Select failed: %s\n", strerror(errno));
 					break;
+				}
+			}
+
+			nchar = 0;
+			if ((ioctl(0, FIONREAD, &nchar) == 0) && (nchar > 0)) {
+				char ch;
+
+				nchar = read(0, &ch, 1);
+				if (nchar == 1) {
+					switch (ch) {
+					case 'q':
+					case 'Q':
+					case 27:
+						stop_smemstat = true;
+						break;
+					case 'a':
+						opt_flags ^= OPT_ARROW;
+						break;
+					case 't':
+						opt_flags ^= OPT_TOP_TOTAL;
+						break;
+					}
 				}
 			}
 
