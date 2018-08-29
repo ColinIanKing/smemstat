@@ -440,7 +440,7 @@ static inline unsigned int OPTIMIZE3 HOT count_bits(const unsigned int val)
 static void mem_to_str(const double val, char *buf, const size_t buflen)
 {
 	double s;
-	double v = (val < 0) ? -val : val;
+	double v = (val < 0.0) ? -val : val;
 	char unit;
 
 	(void)memset(buf, 0, buflen);
