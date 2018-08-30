@@ -1,3 +1,14 @@
+smemstat (0.02.02-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Update date in manual
+  * Update manual to explain top mode action keys
+  * Add top mode key actions
+  * Enable arrow memory size change with -a option
+  * compare double to 0.0 rather than 0
+
+ -- Colin King <colin.king@canonical.com>  Thu, 30 Aug 2018 09:04:01 +0100
+
 smemstat (0.02.01-1) unstable; urgency=medium
 
   * Makefile: bump version
