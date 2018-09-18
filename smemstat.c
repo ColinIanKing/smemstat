@@ -63,17 +63,17 @@
 
 /* process specific information */
 typedef struct proc_info {
+	struct proc_info *next;		/* next in hash */
+	char		*cmdline;	/* Process name from cmdline */
 	pid_t		pid;		/* PID */
 	bool		kernel_thread;	/* true if process is kernel thread */
-	char		*cmdline;	/* Process name from cmdline */
-	struct proc_info *next;		/* next in hash */
 } proc_info_t;
 
 /* UID cache */
 typedef struct uname_cache_t {
-	uid_t		uid;		/* User UID */
-	char *		name;		/* User name */
 	struct uname_cache_t *next;
+	char *		name;		/* User name */
+	uid_t		uid;		/* User UID */
 } uname_cache_t;
 
 /* wakeup event information per process */
@@ -91,17 +91,16 @@ typedef struct mem_info_t {
 	int64_t		d_pss;		/* Delta PSS */
 	int64_t		d_uss;		/* Delta USS */
 	int64_t		d_swap;		/* Delta swap */
-	bool		alive;		/* true if proc is alive */
-
 	struct mem_info_t *d_next;	/* sorted deltas by total */
 	struct mem_info_t *s_next;	/* sorted by total */
 	struct mem_info_t *next;	/* for free list */
+	bool		alive;		/* true if proc is alive */
 } mem_info_t;
 
 typedef struct pid_list {
-	pid_t		pid;		/* process id */
-	char 		*name;		/* process name */
 	struct pid_list	*next;		/* next in list */
+	char 		*name;		/* process name */
+	pid_t		pid;		/* process id */
 } pid_list_t;
 
 typedef struct {
