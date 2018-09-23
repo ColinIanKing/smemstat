@@ -1,3 +1,12 @@
+smemstat (0.02.03-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Don't emit "Note: Mmeory reported in units..." message in quiet mode
+  * Don't emit Change in memory message in quiet mode
+  * Make structs pack more efficiently
+
+ -- Colin King <colin.king@canonical.com>  Sun, 23 Sep 2018 11:10:09 +0100
+
 smemstat (0.02.02-1) unstable; urgency=medium
 
   * Makefile: bump version
