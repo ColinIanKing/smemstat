@@ -490,7 +490,8 @@ static void mem_report_size(void)
 	else if (opt_flags & OPT_MEM_IN_GBYTES)
 		unit = "giga";
 
-	(void)printf("Note: Memory reported in units of %sbytes.\n", unit);
+	if (!(opt_flags & OPT_QUIET))
+		(void)printf("Note: Memory reported in units of %sbytes.\n", unit);
 }
 
 /*
