@@ -1653,7 +1653,7 @@ int main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 
-		if (!(opt_flags & OPT_TOP))
+		if (!(opt_flags & (OPT_TOP | OPT_QUIET)))
 			(void)printf("Change in memory (average per second):\n");
 
 		(void)memset(&new_action, 0, sizeof(new_action));
