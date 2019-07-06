@@ -1,3 +1,11 @@
+smemstat (0.02.04-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Manual: fix typo: comsumers -> consumers
+  * Update copyright year
+
+ -- Colin King <colin.king@canonical.com>  Sat, 6 Jul 2019 21:24:24 +0100
+
 smemstat (0.02.03-1) unstable; urgency=medium
 
   * Makefile: bump version
