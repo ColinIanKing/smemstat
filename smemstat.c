@@ -978,7 +978,7 @@ static int mem_get_by_proc(const pid_t pid, mem_info_t ** const mem)
 		for (p = pids; p; p = p->next) {
 			if (p->pid == pid)
 				break;
-			if (p->name && strcmp(p->name, tmp) == 0)
+			if (tmp && p->name && strcmp(p->name, tmp) == 0)
 				break;
 		}
 		if (!p)
