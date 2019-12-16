@@ -624,8 +624,11 @@ static proc_info_t *proc_cache_add_at_hash_index(
 	if (p->cmdline == NULL)
 		p->kernel_thread = true;
 
-	if ((p->cmdline == NULL) || (opt_flags & OPT_CMD_COMM))
+	if ((p->cmdline == NULL) || (opt_flags & OPT_CMD_COMM)) {
+		if (p->cmdline)
+			free(p->cmdline);
 		p->cmdline = get_pid_comm(pid);
+	}
 	p->next = proc_cache_hash[h];
 	proc_cache_hash[h] = p;
 
