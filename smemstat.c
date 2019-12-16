@@ -1236,7 +1236,9 @@ static int mem_dump(
 	mem_to_str((double)t_rss, s_rss, sizeof(s_rss));
 
 	if (!(opt_flags & OPT_QUIET))
-		df.df_printf("Total: %9s %9s %9s %9s\n\n", s_swap, s_uss, s_pss, s_rss);
+		df.df_printf(" %-*.*s %9s %9s %9s %9s\n\n", 
+			pid_size, pid_size, "Total:",
+			s_swap, s_uss, s_pss, s_rss);
 
 	if (json) {
 		(void)fprintf(json, "    ],\n");
