@@ -33,6 +33,7 @@ endif
 
 BINDIR=/usr/bin
 MANDIR=/usr/share/man/man8
+BASHDIR=/usr/share/bash-completion/completions
 
 OBJS = smemstat.o 
 
@@ -46,7 +47,7 @@ dist:
 	rm -rf smemstat-$(VERSION)
 	mkdir smemstat-$(VERSION)
 	cp -rp Makefile smemstat.c smemstat.8 COPYING README scripts \
-		snap .travis.yml smemstat-$(VERSION)
+		snap .travis.yml bash-completion smemstat-$(VERSION)
 	tar -Jcf smemstat-$(VERSION).tar.xz smemstat-$(VERSION)
 	rm -rf smemstat-$(VERSION)
 
@@ -60,3 +61,5 @@ install: smemstat smemstat.8.gz
 	cp smemstat ${DESTDIR}${BINDIR}
 	mkdir -p ${DESTDIR}${MANDIR}
 	cp smemstat.8.gz ${DESTDIR}${MANDIR}
+	mkdir -p ${DESTDIR}${BASHDIR}
+	cp bash-completion/smemstat ${DESTDIR}${BASHDIR}
