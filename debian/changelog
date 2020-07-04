@@ -1,3 +1,10 @@
+smemstat (0.02.08-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Debian/control: remove compat file, add Rules-Requires-Root rule
+
+ -- Colin King <colin.king@canonical.com>  Sat, 4 Jul 2020 21:50:41 +0100
+
 smemstat (0.02.07-1) unstable; urgency=medium
 
   * Makefile: bump version
