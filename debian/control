@@ -1,9 +1,13 @@
 Source: smemstat
+Rules-Requires-Root: no
 Section: admin
 Priority: optional
 Maintainer: Colin King <colin.king@canonical.com>
 Standards-Version: 4.1.2
-Build-Depends: debhelper (>= 12), libncurses-dev, libncursesw5-dev
+Build-Depends: debhelper (>= 12),
+               debhelper-compat (=13),
+               libncurses-dev,
+               libncursesw5-dev
 Homepage: http://kernel.ubuntu.com/~cking/smemstat
 
 Package: smemstat
