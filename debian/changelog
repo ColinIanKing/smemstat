@@ -1,3 +1,13 @@
+smemstat (0.02.09-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * snapcraft: add architectures remote build info
+  * smemstat: fix alignment of Total: columns in oneshot and dump modes
+  * update copyright to 2021
+  * snapcraft: replace version-script with an override
+
+ -- Colin King <colin.king@canonical.com>  Sun, 4 Jul 2020 22:45:23 +0100
+
 smemstat (0.02.08-1) unstable; urgency=medium
 
   * Makefile: bump version
