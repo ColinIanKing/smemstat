@@ -1131,6 +1131,9 @@ static int mem_dump(
 	char s_swap[12], s_uss[12], s_pss[12], s_rss[12];
 	const int pid_size = pid_max_digits();
 
+	if (one_shot)
+		opt_flags &= ~OPT_ARROW;
+
 	for (m = mem_info_new; m; m = m->next) {
 		mem_delta(m, mem_info_old);
 		for (l = &sorted; *l; l = &(*l)->s_next) {
@@ -1192,7 +1195,7 @@ static int mem_dump(
 	}
 
 	if (!(opt_flags & OPT_QUIET))
-		df.df_printf(" %*.*s      Swap       USS       PSS       RSS %sUser       Command\n",
+		df.df_printf("%*.*s      Swap       USS       PSS       RSS %sUser       Command\n",
 			pid_size, pid_size, "PID",
 			opt_flags & OPT_ARROW ? "D " : "");
 
@@ -1209,9 +1212,8 @@ static int mem_dump(
 			const char * const arrow = (delta < 0) ? "\u2193 " :
 						   ((delta > 0) ? "\u2191 "  : "  ");
 
-			df.df_printf(" %*d %9s %9s %9s %9s %s%-10.10s %s\n",
+			df.df_printf("%*d %9s %9s %9s %9s %s%-10.10s %s\n",
 				pid_size, m->pid, s_swap, s_uss, s_pss, s_rss,
-				one_shot ? " " :
 				opt_flags & OPT_ARROW ? arrow : "",
 				uname_name(m->uname), cmd);
 		}
@@ -1237,7 +1239,7 @@ static int mem_dump(
 	mem_to_str((double)t_rss, s_rss, sizeof(s_rss));
 
 	if (!(opt_flags & OPT_QUIET))
-		df.df_printf(" %-*.*s %9s %9s %9s %9s\n\n",
+		df.df_printf("%-*.*s %9s %9s %9s %9s\n\n",
 			pid_size, pid_size, "Total:",
 			s_swap, s_uss, s_pss, s_rss);
 
@@ -1342,7 +1344,7 @@ static int mem_dump_diff(
 	}
 
 	if (!(opt_flags & OPT_QUIET))
-		df.df_printf(" %*.*s      Swap       USS       PSS       RSS User       Command\n",
+		df.df_printf("%*.*s      Swap       USS       PSS       RSS User       Command\n",
 			pid_size, pid_size, "PID");
 	for (m = sorted_deltas; m; ) {
 		const char *cmd = mem_cmdline(m);
@@ -1354,7 +1356,7 @@ static int mem_dump_diff(
 		mem_to_str((double)m->d_rss / duration, s_rss, sizeof(s_rss));
 
 		if (!(opt_flags & OPT_QUIET)) {
-			df.df_printf(" %*d %9s %9s %9s %9s %-10.10s %s\n",
+			df.df_printf("%*d %9s %9s %9s %9s %-10.10s %s\n",
 				pid_size, m->pid, s_swap, s_uss, s_pss, s_rss,
 				uname_name(m->uname), cmd);
 		}
@@ -1386,7 +1388,7 @@ static int mem_dump_diff(
 	mem_to_str((double)t_d_rss / duration, s_rss, sizeof(s_rss));
 
 	if (!(opt_flags & OPT_QUIET))
-		df.df_printf("Total: %9s %9s %9s %9s\n\n", s_swap, s_uss, s_pss, s_rss);
+		df.df_printf("%-*.*s %9s %9s %9s %9s\n\n", pid_size, pid_size, "Total:", s_swap, s_uss, s_pss, s_rss);
 
 	if (json) {
 		(void)fprintf(json, "        ],\n");
