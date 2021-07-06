@@ -1,3 +1,10 @@
+smemstat (0.02.10-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Fix lost newline characters due to truncation on wide consoles (LP: #1934593)
+
+ -- Colin King <colin.king@canonical.com>  Tue, 6 Jul 2020 20:07:15 +0100
+
 smemstat (0.02.09-1) unstable; urgency=medium
 
   * Makefile: bump version
