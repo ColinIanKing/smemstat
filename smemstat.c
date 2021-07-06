@@ -325,18 +325,26 @@ static void smemstat_top_winsize(const bool redo)
 static void smemstat_top_printf(const char *fmt, ...)
 {
 	va_list ap;
-	char buf[256];
-	int sz = sizeof(buf) - 1;
+	char buf[4096];
+	size_t n, sz = sizeof(buf) - 1;
+
+	smemstat_top_winsize(true);
 
 	if (cury >= rows)
 		return;
 
-	if (cols < sz)
-		sz = cols;
+	move(cury, 0);
+	if ((size_t)cols < sz)
+		sz = (size_t)cols;
 
+	memset(buf, 0, sizeof(buf));
 	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
-	buf[sz] = '\0';
+	n = vsnprintf(buf, sizeof(buf), fmt, ap);
+	if (n > sizeof(buf))
+		n = sizeof(buf) - 1;
+	if (n > sz)
+		n = sz;
+	buf[n] = '\0';
 	(void)mvprintw(cury, 0, buf);
 	va_end(ap);
 	cury++;
@@ -349,11 +357,10 @@ static void smemstat_top_printf(const char *fmt, ...)
 static void smemstat_normal_printf(const char *fmt, ...)
 {
 	va_list ap;
-	char buf[256];
 
 	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
-	(void)fputs(buf, stdout);
+	(void)vfprintf(stdout, fmt, ap);
+	(void)fflush(stdout);
 	va_end(ap);
 }
 
