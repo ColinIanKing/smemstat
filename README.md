@@ -2,7 +2,7 @@
 
 Smemstat reports the physical memory usage taking into consideration shared memory. The tool can either report a current snapshot of memory usage or periodically dump out any changes in memory.
 
-# Smemstat command line options
+## Smemstat command line options
 
 * -c get command name from processes comm field
 * -d strip directory basename off command information
@@ -18,7 +18,7 @@ Smemstat reports the physical memory usage taking into consideration shared memo
 * -t top mode, show only changes in memory
 * -T top mode, show top memory hoggers 
 
-# Example Output
+## Example Output
 
 Analyise 60 seconds of activity with 10 seconds duration per sample, 6 samples
 
