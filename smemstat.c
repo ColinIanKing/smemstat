@@ -345,7 +345,7 @@ static void smemstat_top_printf(const char *fmt, ...)
 	if (n > sz)
 		n = sz;
 	buf[n] = '\0';
-	(void)mvprintw(cury, 0, buf);
+	(void)mvprintw(cury, 0, "%s", buf);
 	va_end(ap);
 	cury++;
 }
