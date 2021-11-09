@@ -1,3 +1,17 @@
+smemstat (0.02.11-1) unstable; urgency=medium
+
+  * Makefile: bump version
+  * Makefile: add README.md to make dist rule
+  * debian/watch: change location to github for tarballs
+  * Update copyright and project email contact information
+  * debian/control: update maintainer email address and project URL
+  * smemstat.c: always use "%s"-style format for printf()-style functions (Closes: #997187)
+  * README.md: Make headings into subheadings
+  * Add README.md
+  * snapcraft: update to core20
+
+ -- Colin Ian King <colin.i.king@gmail.com>  Tue, 9 Nov 2021 18:31:23 +0100
+
 smemstat (0.02.10-1) unstable; urgency=medium
 
   * Makefile: bump version
