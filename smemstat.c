@@ -1134,7 +1134,6 @@ static int mem_dump(
 	mem_info_t *m, **l;
 	mem_info_t *sorted = NULL;
 	int64_t	t_swap = 0, t_uss = 0, t_pss = 0, t_rss = 0;
-	int64_t t_d_swap = 0, t_d_uss = 0, t_d_pss = 0, t_d_rss = 0;
 	char s_swap[12], s_uss[12], s_pss[12], s_rss[12];
 	const int pid_size = pid_max_digits();
 
@@ -1155,11 +1154,6 @@ static int mem_dump(
 		t_uss  += m->uss;
 		t_pss  += m->pss;
 		t_rss  += m->rss;
-
-		t_d_swap += m->d_swap;
-		t_d_uss  += m->d_uss;
-		t_d_pss  += m->d_pss;
-		t_d_rss  += m->d_rss;
 	}
 
 	for (m = mem_info_old; m; m = m->next) {
@@ -1184,12 +1178,6 @@ static int mem_dump(
 		m->d_uss  = -m->uss;
 		m->d_pss  = -m->pss;
 		m->d_rss  = -m->rss;
-
-		t_d_swap += m->d_swap;
-		t_d_uss  += m->d_uss;
-		t_d_pss  += m->d_pss;
-		t_d_rss  += m->d_rss;
-		t_d_rss  -= m->rss;
 
 		m->swap = 0;
 		m->uss = 0;
