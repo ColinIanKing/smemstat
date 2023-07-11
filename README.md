@@ -1,5 +1,9 @@
 # Smemstat: shared memory statistics
 
+<a href="https://repology.org/project/smemstat/versions">
+    <img src="https://repology.org/badge/vertical-allrepos/smemstat.svg" alt="Packaging status" align="right">
+</a>
+
 Smemstat reports the physical memory usage taking into consideration shared memory. The tool can either report a current snapshot of memory usage or periodically dump out any changes in memory.
 
 ## Smemstat command line options
