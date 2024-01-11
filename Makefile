@@ -48,7 +48,7 @@ dist:
 	rm -rf smemstat-$(VERSION)
 	mkdir smemstat-$(VERSION)
 	cp -rp Makefile smemstat.c smemstat.8 COPYING README scripts \
-		snap .travis.yml bash-completion README.md smemstat-$(VERSION)
+		.travis.yml bash-completion README.md smemstat-$(VERSION)
 	tar -Jcf smemstat-$(VERSION).tar.xz smemstat-$(VERSION)
 	rm -rf smemstat-$(VERSION)
 
